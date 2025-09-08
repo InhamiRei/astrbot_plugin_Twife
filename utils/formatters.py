@@ -60,10 +60,10 @@ def format_wife_status(level: int, growth: int, hunger: int, cleanliness: int, h
     exp_percentage = round((growth / next_level_exp * 100), 1) if next_level_exp > 0 else 100
     status_text += f"📈 成长值：{growth}/{next_level_exp} ({exp_percentage}%)\n"
     
-    status_text += f"🍽️ 饥饿：{hunger}/100\n"
-    status_text += f"🧼 清洁：{cleanliness}/100\n"
-    status_text += f"❤️ 健康：{health}/100\n"
-    status_text += f"😊 心情：{mood}/100\n"
+    status_text += f"🍽️ 饥饿：{hunger}/1000\n"
+    status_text += f"🧼 清洁：{cleanliness}/1000\n"
+    status_text += f"❤️ 健康：{health}/1000\n"
+    status_text += f"😊 心情：{mood}/1000\n"
     status_text += f"🏷️ 状态：{status}"
     
     return status_text

@@ -327,11 +327,11 @@ class ShoppingHandler:
         # 更新好感度（最高100），四舍五入到小数点后1位
         new_affection = round(min(100, current_affection + total_affection_gain), 1)
         
-        # 更新老婆属性（最高100，最低0）
-        new_hunger = max(0, min(100, current_hunger + total_hunger_gain))
-        new_cleanliness = max(0, min(100, current_cleanliness + total_cleanliness_gain))
-        new_health = max(0, min(100, current_health + total_health_gain))
-        new_mood = max(0, min(100, current_mood + total_mood_gain))
+        # 更新老婆属性（最高1000，最低0）
+        new_hunger = max(0, min(1000, current_hunger + total_hunger_gain))
+        new_cleanliness = max(0, min(1000, current_cleanliness + total_cleanliness_gain))
+        new_health = max(0, min(1000, current_health + total_health_gain))
+        new_mood = max(0, min(1000, current_mood + total_mood_gain))
         
         # 保存数据
         update_user_data(user_id, backpack=backpack)

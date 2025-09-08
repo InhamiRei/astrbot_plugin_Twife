@@ -64,13 +64,13 @@ def load_global_wife_data():
             if len(user_data_item) < 7:
                 user_data_item.append(0)
             if len(user_data_item) < 8:
-                user_data_item.append(100)
+                user_data_item.append(1000)
             if len(user_data_item) < 9:
-                user_data_item.append(100)
+                user_data_item.append(1000)
             if len(user_data_item) < 10:
-                user_data_item.append(100)
+                user_data_item.append(1000)
             if len(user_data_item) < 11:
-                user_data_item.append(100)
+                user_data_item.append(1000)
             if len(user_data_item) < 12:
                 user_data_item.append("正常")
             if len(user_data_item) < 13:
@@ -100,7 +100,7 @@ def get_user_wife_data(user_id: str):
         load_global_wife_data()
     return global_wife_data.get(str(user_id))
 
-def set_user_wife_data(user_id: str, wife_name: str, nickname: str, purelove=False, affection=0, level=1, growth=0, hunger=100, cleanliness=100, health=100, mood=100, status="正常", education_level="幼儿园", knowledge=0, moe_value=0, spoil_value=0, tsundere_value=0, dark_rate=0, contrast_cute=0):
+def set_user_wife_data(user_id: str, wife_name: str, nickname: str, purelove=False, affection=0, level=1, growth=0, hunger=1000, cleanliness=1000, health=1000, mood=1000, status="正常", education_level="幼儿园", knowledge=0, moe_value=0, spoil_value=0, tsundere_value=0, dark_rate=0, contrast_cute=0):
     """设置用户老婆数据"""
     if not global_wife_data:
         load_global_wife_data()
