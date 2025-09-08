@@ -129,6 +129,12 @@ class DungeonHandler:
             wife_name = wife_data[0].split('.')[0]
             wife_level = wife_data[5]
             
+            # 保存原始属性值，防止在更新数据时被修改
+            original_hunger = wife_data[7]
+            original_cleanliness = wife_data[8]
+            original_health = wife_data[9]
+            original_mood = wife_data[10]
+            
             # 获取老婆的特殊属性
             moe_value = wife_data[14]      # 妹抖值（武力）
             spoil_value = wife_data[15]    # 撒娇值（智力）
@@ -247,16 +253,11 @@ class DungeonHandler:
             update_user_data(user_id, coins=user_data_obj['coins'], trophies=user_data_obj['trophies'])
 
             # 更新老婆属性（降低基础属性，提升特殊属性和经验）
-            # 调试输出：检查配置值
-            print(f"[Debug] DUNGEON_REWARDS stat_penalty: {DUNGEON_REWARDS['stat_penalty']}")
-            print(f"[Debug] 原始属性值 - 饥饿:{wife_data[7]}, 清洁:{wife_data[8]}, 健康:{wife_data[9]}, 心情:{wife_data[10]}")
-            
-            new_hunger = max(0, wife_data[7] + DUNGEON_REWARDS['stat_penalty']['hunger'])
-            new_cleanliness = max(0, wife_data[8] + DUNGEON_REWARDS['stat_penalty']['cleanliness'])
-            new_health = max(0, wife_data[9] + DUNGEON_REWARDS['stat_penalty']['health'])
-            new_mood = max(0, wife_data[10] + DUNGEON_REWARDS['stat_penalty']['mood'])
-            
-            print(f"[Debug] 计算后新属性值 - 饥饿:{new_hunger}, 清洁:{new_cleanliness}, 健康:{new_health}, 心情:{new_mood}")
+            # 计算属性变化
+            new_hunger = max(0, original_hunger + DUNGEON_REWARDS['stat_penalty']['hunger'])
+            new_cleanliness = max(0, original_cleanliness + DUNGEON_REWARDS['stat_penalty']['cleanliness'])
+            new_health = max(0, original_health + DUNGEON_REWARDS['stat_penalty']['health'])
+            new_mood = max(0, original_mood + DUNGEON_REWARDS['stat_penalty']['mood'])
 
             # 增加特殊属性（有概率增加，不是必然的）
             new_moe = moe_value
@@ -335,10 +336,10 @@ class DungeonHandler:
                 attribute_changes.append(f"傲娇值：{tsundere_value}（无变化）")
             
             # 基础属性变化（这些总是会变化）
-            attribute_changes.append(f"饥饿度：{wife_data[7]} → {new_hunger}")
-            attribute_changes.append(f"清洁度：{wife_data[8]} → {new_cleanliness}")
-            attribute_changes.append(f"健康度：{wife_data[9]} → {new_health}")
-            attribute_changes.append(f"心情：{wife_data[10]} → {new_mood}")
+            attribute_changes.append(f"饥饿度：{original_hunger} → {new_hunger}")
+            attribute_changes.append(f"清洁度：{original_cleanliness} → {new_cleanliness}")
+            attribute_changes.append(f"健康度：{original_health} → {new_health}")
+            attribute_changes.append(f"心情：{original_mood} → {new_mood}")
             
             result_msg += "，".join(attribute_changes) + "\n"
 

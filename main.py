@@ -43,7 +43,7 @@ from .handlers.dungeon_handler import DungeonHandler
     "Hey、小怪兽",
     "群老婆插件",
     "v1.4",
-    "https://github.com/zgojin/zgojin-zgojin-astrbot_plugin_AW"
+    ""
 )
 class WifePlugin(Star):
     """群老婆插件 - 重构版本
