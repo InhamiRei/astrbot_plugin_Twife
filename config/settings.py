@@ -11,7 +11,7 @@ PLUGIN_AUTHOR = "Hey、小怪兽"
 PLUGIN_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # 获取插件根目录
 CONFIG_DIR = os.path.join(PLUGIN_DIR, 'config')  # Python配置文件目录
 DATA_DIR = os.path.join(PLUGIN_DIR, 'data')     # JSON数据文件目录
-IMG_DIR = os.path.join(PLUGIN_DIR, 'img', 'wife')
+IMG_DIR = os.path.join(PLUGIN_DIR, 'static', 'wife')
 
 # 修复：确保使用绝对路径
 PLUGIN_DIR = os.path.abspath(PLUGIN_DIR)

@@ -282,7 +282,7 @@ class WifePlugin(Star):
     async def wife_menu(self, event: AstrMessageEvent):
         """抽老婆菜单指令，发送菜单图片"""
         # 获取menu.png的路径（与main.py同级）
-        menu_image_path = os.path.join(os.path.dirname(__file__), 'img', 'pic', 'menu.png')
+        menu_image_path = os.path.join(os.path.dirname(__file__), 'static', 'pic', 'menu.png')
 
         # 检查图片文件是否存在
         if os.path.exists(menu_image_path):
@@ -355,7 +355,7 @@ class WifePlugin(Star):
     async def furniture_menu(self, event: AstrMessageEvent):
         """家具中心-图片指令，发送家具目录图片"""
         # 获取furniture.png的路径（与main.py同级）
-        furniture_image_path = os.path.join(os.path.dirname(__file__), 'img', 'pic', 'furniture.png')
+        furniture_image_path = os.path.join(os.path.dirname(__file__), 'static', 'pic', 'furniture.png')
 
         # 检查图片文件是否存在
         if os.path.exists(furniture_image_path):
