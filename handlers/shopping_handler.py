@@ -239,16 +239,32 @@ class ShoppingHandler:
             yield event.plain_result('无法通过 event.get_sender_id() 获取用户 ID，请检查消息事件对象。')
             return
 
-        # 解析命令，获取物品名称
+        # 解析命令，获取物品名称和数量
         message_str = event.message_str.strip()
         if not message_str.startswith("赠送礼物"):
-            yield event.plain_result(f': {nickname}，请使用正确的格式：赠送礼物 物品名称')
+            yield event.plain_result(f': {nickname}，请使用正确的格式：赠送礼物 物品名称 数量')
             return
             
-        item_name = message_str[4:].strip()  # 去掉"赠送礼物"前缀
-        if not item_name:
-            yield event.plain_result(f': {nickname}，请指定要赠送的物品名称，格式：赠送礼物 物品名称')
+        parts = message_str[4:].strip().split()  # 去掉"赠送礼物"前缀
+        if len(parts) < 1:
+            yield event.plain_result(f': {nickname}，请指定要赠送的物品名称，格式：赠送礼物 物品名称 数量')
             return
+        elif len(parts) == 1:
+            item_name = parts[0]
+            quantity = 1  # 默认数量为1
+        else:
+            item_name = parts[0]
+            try:
+                quantity = int(parts[1])
+                if quantity <= 0:
+                    yield event.plain_result(f': {nickname}，赠送数量必须大于0')
+                    return
+                if quantity > 99:
+                    yield event.plain_result(f': {nickname}，一次最多只能赠送99个物品')
+                    return
+            except ValueError:
+                yield event.plain_result(f': {nickname}，请输入有效的数量')
+                return
 
         # 检查用户是否有老婆
         wife_data = get_user_wife_data(user_id)
@@ -263,6 +279,12 @@ class ShoppingHandler:
         # 检查背包中是否有该物品
         if item_name not in backpack or backpack[item_name] <= 0:
             yield event.plain_result(f': {nickname}，你的背包中没有{item_name}，无法赠送。')
+            return
+            
+        # 检查背包中是否有足够的物品数量
+        available_quantity = backpack[item_name]
+        if available_quantity < quantity:
+            yield event.plain_result(f': {nickname}，你的背包中只有{available_quantity}个{item_name}，无法赠送{quantity}个。')
             return
             
         # 检查物品是否在配置中
@@ -290,19 +312,26 @@ class ShoppingHandler:
         current_health = wife_data[9]
         current_mood = wife_data[10]
         
-        # 更新背包（减少1个物品）
-        backpack[item_name] -= 1
+        # 更新背包（减少指定数量的物品）
+        backpack[item_name] -= quantity
         if backpack[item_name] <= 0:
             del backpack[item_name]
             
+        # 批量计算属性效果（每个物品的效果叠加）
+        total_affection_gain = affection_value * quantity
+        total_hunger_gain = hunger_effect * quantity
+        total_mood_gain = mood_effect * quantity
+        total_cleanliness_gain = cleanliness_effect * quantity
+        total_health_gain = health_effect * quantity
+            
         # 更新好感度（最高100），四舍五入到小数点后1位
-        new_affection = round(min(100, current_affection + affection_value), 1)
+        new_affection = round(min(100, current_affection + total_affection_gain), 1)
         
         # 更新老婆属性（最高100，最低0）
-        new_hunger = max(0, min(100, current_hunger + hunger_effect))
-        new_cleanliness = max(0, min(100, current_cleanliness + cleanliness_effect))
-        new_health = max(0, min(100, current_health + health_effect))
-        new_mood = max(0, min(100, current_mood + mood_effect))
+        new_hunger = max(0, min(100, current_hunger + total_hunger_gain))
+        new_cleanliness = max(0, min(100, current_cleanliness + total_cleanliness_gain))
+        new_health = max(0, min(100, current_health + total_health_gain))
+        new_mood = max(0, min(100, current_mood + total_mood_gain))
         
         # 保存数据
         update_user_data(user_id, backpack=backpack)
@@ -310,29 +339,41 @@ class ShoppingHandler:
                              cleanliness=new_cleanliness, health=new_health, mood=new_mood)
         
         # 生成随机回应（简化版）
-        gift_responses = [
-            f"{wife_display_name}接过{item_name}：谢谢你！",
-            f"{wife_display_name}对{item_name}爱不释手：正是我想要的！",
-            f"{wife_display_name}开心地收下了{item_name}：你真的太贴心了！",
-            f"{wife_display_name}红着脸接过{item_name}：这…这太珍贵了…",
-            f"{wife_display_name}惊喜地抱着{item_name}：你怎么知道我喜欢这个！"
-        ]
+        if quantity == 1:
+            gift_responses = [
+                f"{wife_display_name}接过{item_name}：谢谢你！",
+                f"{wife_display_name}对{item_name}爱不释手：正是我想要的！",
+                f"{wife_display_name}开心地收下了{item_name}：你真的太贴心了！",
+                f"{wife_display_name}红着脸接过{item_name}：这…这太珍贵了…",
+                f"{wife_display_name}惊喜地抱着{item_name}：你怎么知道我喜欢这个！"
+            ]
+        else:
+            gift_responses = [
+                f"{wife_display_name}接过{quantity}个{item_name}：哇，这么多！谢谢你！",
+                f"{wife_display_name}对{quantity}个{item_name}爱不释手：这些都是我想要的！",
+                f"{wife_display_name}开心地收下了{quantity}个{item_name}：你对我真的太好了！",
+                f"{wife_display_name}红着脸接过{quantity}个{item_name}：这…这些都太珍贵了…",
+                f"{wife_display_name}惊喜地抱着{quantity}个{item_name}：你真了解我的喜好！"
+            ]
         
-        result_message = f': {nickname}，你向{wife_display_name}赠送了{item_name}\n'
+        if quantity == 1:
+            result_message = f': {nickname}，你向{wife_display_name}赠送了{item_name}\n'
+        else:
+            result_message = f': {nickname}，你向{wife_display_name}赠送了{item_name} x{quantity}\n'
         result_message += f'{description}\n'
         result_message += f'{random.choice(gift_responses)}\n'
-        result_message += f'💖 好感度增加了{affection_value:.1f}点！({current_affection:.1f} → {new_affection:.1f})\n'
+        result_message += f'💖 好感度增加了{total_affection_gain:.1f}点！({current_affection:.1f} → {new_affection:.1f})\n'
         
         # 显示属性变化
         attribute_changes = []
-        if hunger_effect != 0:
-            attribute_changes.append(f'🍽️ 饥饿：{current_hunger} → {new_hunger} ({hunger_effect:+d})')
-        if mood_effect != 0:
-            attribute_changes.append(f'😊 心情：{current_mood} → {new_mood} ({mood_effect:+d})')
-        if cleanliness_effect != 0:
-            attribute_changes.append(f'🧼 清洁：{current_cleanliness} → {new_cleanliness} ({cleanliness_effect:+d})')
-        if health_effect != 0:
-            attribute_changes.append(f'❤️ 健康：{current_health} → {new_health} ({health_effect:+d})')
+        if total_hunger_gain != 0:
+            attribute_changes.append(f'🍽️ 饥饿：{current_hunger} → {new_hunger} ({total_hunger_gain:+d})')
+        if total_mood_gain != 0:
+            attribute_changes.append(f'😊 心情：{current_mood} → {new_mood} ({total_mood_gain:+d})')
+        if total_cleanliness_gain != 0:
+            attribute_changes.append(f'🧼 清洁：{current_cleanliness} → {new_cleanliness} ({total_cleanliness_gain:+d})')
+        if total_health_gain != 0:
+            attribute_changes.append(f'❤️ 健康：{current_health} → {new_health} ({total_health_gain:+d})')
         
         if attribute_changes:
             result_message += '\n'.join(attribute_changes)
