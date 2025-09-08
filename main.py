@@ -35,8 +35,11 @@ from .handlers.property_handler import PropertyHandler
 from .handlers.shopping_handler import ShoppingHandler
 from .handlers.work_study_handler import WorkStudyHandler
 from .handlers.furniture_handler import FurnitureHandler
-from .handlers.special_attributes_handler import SpecialAttributesHandler
+from .handlers.special_attributes_handler import WifeDetailsHandler
 from .handlers.dungeon_handler import DungeonHandler
+from .handlers.costume_shop_handler import CostumeShopHandler
+from .handlers.dress_up_handler import DressUpHandler
+from .handlers.item_query_handler import ItemQueryHandler
 
 @register(
     "astrbot_plugin_aw",
@@ -70,8 +73,11 @@ class WifePlugin(Star):
             self.shopping_handler = ShoppingHandler()
             self.work_study_handler = WorkStudyHandler()
             self.furniture_handler = FurnitureHandler()
-            self.special_attributes_handler = SpecialAttributesHandler()
+            self.wife_details_handler = WifeDetailsHandler()
             self.dungeon_handler = DungeonHandler()
+            self.costume_shop_handler = CostumeShopHandler()
+            self.dress_up_handler = DressUpHandler()
+            self.item_query_handler = ItemQueryHandler()
 
             # 初始化所有数据
             initialize_all_data()
@@ -133,11 +139,18 @@ class WifePlugin(Star):
             "抽老婆菜单": self.wife_menu,
             
             # 特殊属性查询命令
-            "老婆属性": self.special_attributes_handler.query_wife_attributes,
+            "老婆详情": self.wife_details_handler.query_wife_details,
             
             # 地下城命令
             "地下城列表": self.dungeon_handler.dungeon_list,
             "前往地下城": self.dungeon_handler.enter_dungeon,
+            
+            # 服装系统命令
+            "服装商店": self.costume_shop_handler.costume_shop,
+            "购买服装": self.costume_shop_handler.buy_costume,
+            "换衣": self.dress_up_handler.dress_up,
+            "脱下": self.dress_up_handler.undress,
+            "查询物品": self.item_query_handler.query_item,
             }
 
             self.admins = self.load_admins()
@@ -240,7 +253,7 @@ class WifePlugin(Star):
 
             for command, func in self.commands.items():
                 # 精准匹配：消息必须完全等于命令，或者是带参数的命令
-                match_condition = message_str == command or (command in ["确认老婆", "牛老婆", "查老婆", "老婆属性", "赠送礼物", "出售物品", "购买物品", "出门学习", "出门打工", "购买家具", "出售家具", "家具中心-图片", "前往地下城", "一键出售战利品"] and message_str.startswith(command))
+                match_condition = message_str == command or (command in ["确认老婆", "牛老婆", "查老婆", "老婆详情", "赠送礼物", "出售物品", "购买物品", "出门学习", "出门打工", "购买家具", "出售家具", "家具中心-图片", "前往地下城", "一键出售战利品", "购买服装", "换衣", "脱下", "查询物品"] and message_str.startswith(command))
 
                 if match_condition:
                     # 正式群
@@ -310,11 +323,16 @@ class WifePlugin(Star):
         menu += "24. 家具中心-图片 - 查看精美的家具目录图片\n"
         menu += "25. 购买家具 家具名 - 购买指定家具装饰房产\n"
         menu += "26. 出售家具 家具名 - 出售不需要的家具换取金币\n"
-        menu += "27. 老婆属性 - 查询老婆的妹抖值、撒娇值、傲娇值、黑化率、反差萌（可培养）\n"
+        menu += "27. 老婆详情 - 查询老婆的妹抖值、撒娇值、傲娇值、黑化率、反差萌及装备信息\n"
         menu += "28. 地下城列表 - 查看可进入的地下城列表\n"
         menu += "29. 前往地下城 序号 - 进入指定地下城进行冒险战斗\n"
         menu += "30. 一键出售战利品 - 快速出售所有地下城获得的战利品\n"
         menu += "31. 抽老婆菜单 - 显示本菜单\n"
+        menu += "32. 服装商店 - 购买精品服装（兔女郎、女仆、巫女、魔法少女、小恶魔套装）\n"
+        menu += "33. 购买服装 服装名 - 购买指定服装\n"
+        menu += "34. 换衣 服装名 - 为老婆穿上指定服装\n"
+        menu += "35. 脱下 服装名/部位 - 脱下指定服装或部位的装备\n"
+        menu += "36. 查询物品 物品名 - 查看物品详情和效果\n"
         menu += "\n【系统特色】\n"
         menu += "🎮 完全重构的模块化架构\n"
         menu += "📊 老婆属性系统：等级、成长值、饥饿、清洁、健康、心情\n"
@@ -330,6 +348,7 @@ class WifePlugin(Star):
         menu += "💕 情感系统：好感度、纯爱保护\n"
         menu += "⚔️ NTR系统：牛头人盛宴、无敌状态\n"
         menu += "🗡️ 地下城系统：冒险战斗、杀怪统计、结晶收集\n"
+        menu += "👗 服装系统：五大精品套装、装备属性加成、套装效果\n"
 
         yield event.plain_result(menu)
 

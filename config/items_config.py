@@ -613,7 +613,7 @@ ITEMS_LIST = [
         "cleanliness_effect": 0,
         "health_effect": 5,
         "category": "食物",
-        "buy_price": 20
+        "buy_price": 500000
     },
     {
         "name": "糖果",

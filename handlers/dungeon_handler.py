@@ -135,12 +135,26 @@ class DungeonHandler:
             original_health = wife_data[9]
             original_mood = wife_data[10]
             
-            # 获取老婆的特殊属性
-            moe_value = wife_data[14]      # 妹抖值（武力）
-            spoil_value = wife_data[15]    # 撒娇值（智力）
-            tsundere_value = wife_data[16] # 傲娇值（敏捷）
-            dark_rate = wife_data[17]      # 黑化率（暴击率）
-            contrast_cute = wife_data[18]  # 反差萌（暴击伤害）
+            # 获取老婆的特殊属性（基础值）
+            base_moe_value = wife_data[14]      # 妹抖值（武力）
+            base_spoil_value = wife_data[15]    # 撒娇值（智力）
+            base_tsundere_value = wife_data[16] # 傲娇值（敏捷）
+            base_dark_rate = wife_data[17]      # 黑化率（暴击率）
+            base_contrast_cute = wife_data[18]  # 反差萌（暴击伤害）
+            
+            # 获取装备加成效果
+            user_data_obj = get_user_data(user_id)
+            equipped_items = user_data_obj.get("equipment", {})
+            
+            from ..config.costume_config import calculate_equipment_effects
+            equipment_effects, set_bonus = calculate_equipment_effects(equipped_items)
+            
+            # 计算最终属性（基础属性 + 装备加成）
+            moe_value = int(base_moe_value * (1 + equipment_effects["moe_value"] / 100))
+            spoil_value = int(base_spoil_value * (1 + equipment_effects["spoil_value"] / 100))
+            tsundere_value = int(base_tsundere_value * (1 + equipment_effects["tsundere_value"] / 100))
+            dark_rate = int(base_dark_rate * (1 + equipment_effects["dark_rate"] / 100))
+            contrast_cute = int(base_contrast_cute * (1 + equipment_effects["contrast_cute"] / 100))
 
             # 计算战斗力（重新平衡）
             base_power = wife_level * 5  # 降低等级权重
@@ -307,8 +321,11 @@ class DungeonHandler:
                                 dark_rate=new_dark,
                                 contrast_cute=new_contrast)
 
-            # 构建结果消息
-            result_msg = f"⚔️ {wife_name}在{dungeon['name']}中的冒险结果 ⚔️\n"
+            # 构建结果消息  
+            equipment_info = ""
+            if any(item for item in equipped_items.values() if item):
+                equipment_info = "⚔️ (装备加成已生效) "
+            result_msg = f"⚔️ {wife_name}在{dungeon['name']}中的冒险结果 {equipment_info}⚔️\n"
             # result_msg += f"🎯 本次战斗：进行了{max_kills}次战斗（基础{base_battles}次 + 额外{extra_battles}次）\n\n"
 
             result_msg += f"💰 获得金币：{int(total_gold)}\n"
@@ -319,21 +336,21 @@ class DungeonHandler:
             # 构建属性变化信息，只显示有变化的
             attribute_changes = []
             
-            # 特殊属性变化
-            if new_moe != moe_value:
-                attribute_changes.append(f"妹抖值：{moe_value} → {new_moe} (+{new_moe - moe_value})")
+            # 特殊属性变化（显示基础属性的变化）
+            if new_moe != base_moe_value:
+                attribute_changes.append(f"妹抖值：{base_moe_value} → {new_moe} (+{new_moe - base_moe_value})")
             else:
-                attribute_changes.append(f"妹抖值：{moe_value}（无变化）")
+                attribute_changes.append(f"妹抖值：{base_moe_value}（无变化）")
                 
-            if new_spoil != spoil_value:
-                attribute_changes.append(f"撒娇值：{spoil_value} → {new_spoil} (+{new_spoil - spoil_value})")
+            if new_spoil != base_spoil_value:
+                attribute_changes.append(f"撒娇值：{base_spoil_value} → {new_spoil} (+{new_spoil - base_spoil_value})")
             else:
-                attribute_changes.append(f"撒娇值：{spoil_value}（无变化）")
+                attribute_changes.append(f"撒娇值：{base_spoil_value}（无变化）")
                 
-            if new_tsundere != tsundere_value:
-                attribute_changes.append(f"傲娇值：{tsundere_value} → {new_tsundere} (+{new_tsundere - tsundere_value})")
+            if new_tsundere != base_tsundere_value:
+                attribute_changes.append(f"傲娇值：{base_tsundere_value} → {new_tsundere} (+{new_tsundere - base_tsundere_value})")
             else:
-                attribute_changes.append(f"傲娇值：{tsundere_value}（无变化）")
+                attribute_changes.append(f"傲娇值：{base_tsundere_value}（无变化）")
             
             # 基础属性变化（这些总是会变化）
             attribute_changes.append(f"饥饿度：{original_hunger} → {new_hunger}")

@@ -1,9 +1,10 @@
-"""老婆特殊属性处理器"""
+"""老婆详情处理器"""
 import re
 from astrbot.api.all import *
 from ..core.data_manager import *
+from ..config.costume_config import calculate_equipment_effects, get_costume_by_name
 
-class SpecialAttributesHandler:
+class WifeDetailsHandler:
     def __init__(self):
         pass
 
@@ -20,8 +21,8 @@ class SpecialAttributesHandler:
         if target_id:
             return target_id
         msg = event.message_str.strip()
-        if msg.startswith("老婆属性"):
-            target_name = msg[len("老婆属性"):].strip()
+        if msg.startswith("老婆详情"):
+            target_name = msg[len("老婆详情"):].strip()
             if target_name:
                 # 遍历全局老婆数据查找匹配的昵称
                 for user_id, user_data in global_wife_data.items():
@@ -35,8 +36,8 @@ class SpecialAttributesHandler:
                         print(f'解析目标用户时出错: {e}')
         return None
 
-    async def query_wife_attributes(self, event: AstrMessageEvent):
-        """查询老婆特殊属性功能"""
+    async def query_wife_details(self, event: AstrMessageEvent):
+        """查询老婆详情功能"""
         try:
             group_id = event.message_obj.group_id
             if not group_id:
@@ -81,34 +82,104 @@ class SpecialAttributesHandler:
             dark_rate = wife_data[17]
             contrast_cute = wife_data[18]
             
+            # 获取用户装备信息
+            user_data_obj = get_user_data(target_id)
+            equipped_items = user_data_obj.get("equipment", {})
+            
+            # 计算装备加成效果
+            equipment_effects, set_bonus = calculate_equipment_effects(equipped_items)
+            
+            # 计算最终属性（基础属性 + 装备加成的百分比）
+            final_moe = int(moe_value * (1 + equipment_effects["moe_value"] / 100))
+            final_spoil = int(spoil_value * (1 + equipment_effects["spoil_value"] / 100))
+            final_tsundere = int(tsundere_value * (1 + equipment_effects["tsundere_value"] / 100))
+            final_dark_rate = int(dark_rate * (1 + equipment_effects["dark_rate"] / 100))
+            final_contrast_cute = int(contrast_cute * (1 + equipment_effects["contrast_cute"] / 100))
+            
             # 格式化属性显示
             attributes_text = self.format_attributes_display(
-                moe_value, spoil_value, tsundere_value, dark_rate, contrast_cute
+                moe_value, spoil_value, tsundere_value, dark_rate, contrast_cute,
+                final_moe, final_spoil, final_tsundere, final_dark_rate, final_contrast_cute,
+                equipment_effects
             )
+            
+            # 格式化装备显示
+            equipment_text = self.format_equipment_display(equipped_items, set_bonus)
             
             # 判断是否为本人查询
             if target_id == user_id:
-                text_message = f': {target_nickname}的老婆{name}的特殊属性：\n{attributes_text}'
+                text_message = f': {target_nickname}的老婆{name}的详细信息：\n{attributes_text}\n\n{equipment_text}'
             else:
-                text_message = f': {target_nickname}的老婆{name}的特殊属性：\n{attributes_text}'
+                text_message = f': {target_nickname}的老婆{name}的详细信息：\n{attributes_text}\n\n{equipment_text}'
 
             # 直接发送文本消息，不带图片
             yield event.plain_result(text_message)
                 
         except Exception as e:
-            print(f"[Wife Plugin] query_wife_attributes函数发生异常: {e}")
+            print(f"[Wife Plugin] query_wife_details函数发生异常: {e}")
             import traceback
             traceback.print_exc()
-            yield event.plain_result(f'查询老婆属性功能出现错误: {str(e)}')
+            yield event.plain_result(f'查询老婆详情功能出现错误: {str(e)}')
 
-    def format_attributes_display(self, moe_value, spoil_value, tsundere_value, dark_rate, contrast_cute):
+    def format_attributes_display(self, base_moe, base_spoil, base_tsundere, base_dark_rate, base_contrast_cute,
+                                 final_moe, final_spoil, final_tsundere, final_dark_rate, final_contrast_cute, equipment_effects):
         """格式化属性显示"""
         
-        attributes_text = f"""💕 妹抖值：{moe_value}
-🎀 撒娇值：{spoil_value}
-😤 傲娇值：{tsundere_value}
-🖤 黑化率：{dark_rate}
-✨ 反差萌：{contrast_cute}"""
+        attributes_text = "【特殊属性】\n"
+        
+        # 如果有装备加成，显示基础值+加成值=最终值的格式
+        if any(effect > 0 for effect in equipment_effects.values()):
+            # 计算实际增幅百分比（基于最终值相对于基础值的增幅）
+            actual_moe_increase = int((final_moe - base_moe) / max(base_moe, 1) * 100) if base_moe > 0 else equipment_effects['moe_value']
+            actual_spoil_increase = int((final_spoil - base_spoil) / max(base_spoil, 1) * 100) if base_spoil > 0 else equipment_effects['spoil_value']
+            actual_tsundere_increase = int((final_tsundere - base_tsundere) / max(base_tsundere, 1) * 100) if base_tsundere > 0 else equipment_effects['tsundere_value']
+            actual_dark_increase = int((final_dark_rate - base_dark_rate) / max(base_dark_rate, 1) * 100) if base_dark_rate > 0 else equipment_effects['dark_rate']
+            actual_contrast_increase = int((final_contrast_cute - base_contrast_cute) / max(base_contrast_cute, 1) * 100) if base_contrast_cute > 0 else equipment_effects['contrast_cute']
+
+            attributes_text += f"💕 妹抖值：{base_moe} (+{actual_moe_increase}%) = {final_moe}\n"
+            attributes_text += f"🎀 撒娇值：{base_spoil} (+{actual_spoil_increase}%) = {final_spoil}\n"
+            attributes_text += f"😤 傲娇值：{base_tsundere} (+{actual_tsundere_increase}%) = {final_tsundere}\n"
+            attributes_text += f"🖤 黑化率：{base_dark_rate} (+{actual_dark_increase}%) = {final_dark_rate}\n"
+            attributes_text += f"✨ 反差萌：{base_contrast_cute} (+{actual_contrast_increase}%) = {final_contrast_cute}"
+        else:
+            # 没有装备加成时，只显示基础值
+            attributes_text += f"💕 妹抖值：{base_moe}\n"
+            attributes_text += f"🎀 撒娇值：{base_spoil}\n"
+            attributes_text += f"😤 傲娇值：{base_tsundere}\n"
+            attributes_text += f"🖤 黑化率：{base_dark_rate}\n"
+            attributes_text += f"✨ 反差萌：{base_contrast_cute}"
         
         return attributes_text
+        
+    def format_equipment_display(self, equipped_items, set_bonus):
+        """格式化装备显示"""
+        
+        equipment_text = "【当前装备】\n"
+        
+        slot_names = {
+            "头部": "👑 头部",
+            "身体": "👗 身体",
+            "手部": "🧤 手部", 
+            "腿部": "👖 腿部",
+            "脚部": "👠 脚部",
+            "手持": "🎪 手持",
+            "饰品": "💎 饰品"
+        }
+        
+        has_equipment = False
+        for slot, item_name in equipped_items.items():
+            if item_name:
+                has_equipment = True
+                equipment_text += f"{slot_names.get(slot, slot)}：{item_name}\n"
+            else:
+                equipment_text += f"{slot_names.get(slot, slot)}：无\n"
+        
+        if not has_equipment:
+            equipment_text += "暂无任何装备\n"
+        
+        # 显示套装效果
+        if set_bonus:
+            equipment_text += f"\n🌟 套装效果：{set_bonus['bonus_description']}"
+            
+        return equipment_text.rstrip()
 

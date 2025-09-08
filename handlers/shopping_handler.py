@@ -27,6 +27,7 @@ class ShoppingHandler:
         trophies_str = format_backpack(user_data_obj["trophies"])  # 使用相同的格式化函数
         property_name = user_data_obj["property"]
         furniture_inventory = user_data_obj["furniture"]
+        wardrobe = user_data_obj.get("wardrobe", {})
         
         # 获取房产信息
         from ..config.properties import get_property_value, get_property_space, get_property_sell_bonus, PROPERTY_LEVELS
@@ -65,7 +66,8 @@ class ShoppingHandler:
         # assets_message += f"📈 股票/基金：暂无\n"
         # assets_message += f"🏭 公司/商铺/矿产/地皮/岛屿：暂无\n"
         assets_message += f"🎒 背包：{backpack_str}\n"
-        assets_message += f"🏆 战利品：{trophies_str}"
+        assets_message += f"🏆 战利品：{trophies_str}\n"
+        assets_message += f"👗 衣柜：{self.format_wardrobe(wardrobe)}"
         if user_data_obj["trophies"]:  # 如果有战利品，提示可以一键出售
             assets_message += f"\n💡 提示：使用\"一键出售战利品\"命令可快速出售所有战利品"
 
@@ -324,8 +326,8 @@ class ShoppingHandler:
         total_cleanliness_gain = cleanliness_effect * quantity
         total_health_gain = health_effect * quantity
             
-        # 更新好感度（最高100），四舍五入到小数点后1位
-        new_affection = round(min(100, current_affection + total_affection_gain), 1)
+        # 更新好感度，四舍五入到小数点后1位
+        new_affection = round(current_affection + total_affection_gain, 1)
         
         # 更新老婆属性（最高1000，最低0）
         new_hunger = max(0, min(1000, current_hunger + total_hunger_gain))
@@ -379,12 +381,18 @@ class ShoppingHandler:
             result_message += '\n'.join(attribute_changes)
         
         # 检查是否达到特殊里程碑
-        if new_affection == 100 and current_affection < 100:
-            result_message += '\n🎆 恭喜！你们的好感度达到了满级100！这是传说中的最高境界！'
-        elif new_affection >= 50 and current_affection < 50:
-            result_message += '\n✨ 你们的感情越来越深厚，已经超越了一般的恋人关系！'
-        elif new_affection >= 25 and current_affection < 25:
-            result_message += '\n💕 你们的爱情已经非常稳固，真是一对让人羡慕的恋人！'
+        milestone_levels = [1000, 2000, 3000, 4000, 5000, 10000, 50000, 100000]
+        for milestone in milestone_levels:
+            if new_affection >= milestone and current_affection < milestone:
+                if milestone == 1000:
+                    result_message += '\n🎆 恭喜！你们的好感度达到了1000！感情进入新的阶段！'
+                elif milestone == 10000:
+                    result_message += '\n✨ 好感度突破万点大关！你们的爱情已经超越了一般的恋人关系！'
+                elif milestone == 100000:
+                    result_message += '\n🌟 好感度突破十万大关！这是传说中的至高境界！'
+                else:
+                    result_message += f'\n💕 好感度达到了{milestone}！你们的爱情越来越深厚！'
+                break
         
         affection_status = get_affection_status(new_affection)
         result_message += f'\n{affection_status}'
@@ -688,3 +696,23 @@ class ShoppingHandler:
         result_message += f'🎒 {item_name}已放入背包！'
         
         yield event.plain_result(result_message)
+
+    def format_wardrobe(self, wardrobe):
+        """格式化衣柜显示"""
+        if not wardrobe:
+            return "暂无服装"
+        
+        # 按部位分组
+        slots_group = {}
+        for costume_name, costume_info in wardrobe.items():
+            slot = costume_info.get("slot", "其他")
+            if slot not in slots_group:
+                slots_group[slot] = []
+            slots_group[slot].append(costume_name)
+        
+        wardrobe_parts = []
+        for slot, costumes in slots_group.items():
+            costumes_str = "、".join(costumes)
+            wardrobe_parts.append(f"{costumes_str}（{slot}）")
+        
+        return "，".join(wardrobe_parts)

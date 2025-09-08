@@ -179,7 +179,17 @@ def get_user_data(user_id: str):
             "backpack": {},  # 空背包
             "property": "桥洞下的破旧帐篷",  # 默认房产
             "furniture": {},  # 家具库存
-            "trophies": {}  # 战利品（地下城掉落）
+            "trophies": {},  # 战利品（地下城掉落）
+            "wardrobe": {},  # 衣柜（存放服装）
+            "equipment": {  # 当前装备
+                "头部": None,
+                "身体": None,
+                "手部": None,
+                "腿部": None,
+                "脚部": None,
+                "手持": None,
+                "饰品": None
+            }
         }
         save_user_data()
     
@@ -191,10 +201,26 @@ def get_user_data(user_id: str):
     if "trophies" not in user_data[user_id]:
         user_data[user_id]["trophies"] = {}
         save_user_data()
+        
+    if "wardrobe" not in user_data[user_id]:
+        user_data[user_id]["wardrobe"] = {}
+        save_user_data()
+        
+    if "equipment" not in user_data[user_id]:
+        user_data[user_id]["equipment"] = {
+            "头部": None,
+            "身体": None,
+            "手部": None,
+            "腿部": None,
+            "脚部": None,
+            "手持": None,
+            "饰品": None
+        }
+        save_user_data()
     
     return user_data[user_id]
 
-def update_user_data(user_id: str, coins=None, backpack=None, property=None, furniture=None, trophies=None):
+def update_user_data(user_id: str, coins=None, backpack=None, property=None, furniture=None, trophies=None, wardrobe=None, equipment=None):
     """更新用户数据"""
     user_data_obj = get_user_data(user_id)
     if coins is not None:
@@ -207,6 +233,10 @@ def update_user_data(user_id: str, coins=None, backpack=None, property=None, fur
         user_data_obj["furniture"] = furniture
     if trophies is not None:
         user_data_obj["trophies"] = trophies
+    if wardrobe is not None:
+        user_data_obj["wardrobe"] = wardrobe
+    if equipment is not None:
+        user_data_obj["equipment"] = equipment
     save_user_data()
 
 # === 每日限制数据管理 ===

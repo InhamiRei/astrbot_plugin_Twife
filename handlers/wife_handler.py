@@ -308,6 +308,10 @@ class WifeHandler:
                 activity_status_str = f"🎯 当前状态：{activity_desc}（还剩{remaining_time}）"
             else:
                 activity_status_str = f"🎯 当前状态：{activity_desc}"
+                
+            # 获取地下城冷却状态
+            from ..utils.time_utils import get_dungeon_cooldown_status
+            dungeon_status_str = get_dungeon_cooldown_status(target_id)
             
             # 获取杀怪统计
             kill_stats_display = get_kill_stats_display(target_id)
@@ -321,14 +325,14 @@ class WifeHandler:
                     purelove_text = "🛡️ 纯爱无敌状态：已开启，爱情固若金汤！"
                 else:
                     purelove_text = "⚠️ 纯爱无敌状态：未开启，小心牛头人攻击！"
-                text_message = f': {target_nickname}的二次元老婆是{name}哒~\n\n{wife_status_str}\n\n{activity_status_str}\n\n📚 {education_str}\n💖 好感度：{affection:.1f}\n{affection_status}\n{purelove_text}\n\n{kill_stats_str}'
+                text_message = f': {target_nickname}的二次元老婆是{name}哒~\n\n{wife_status_str}\n\n{activity_status_str}\n{dungeon_status_str}\n\n📚 {education_str}\n💖 好感度：{affection:.1f}\n{affection_status}\n{purelove_text}\n\n{kill_stats_str}'
             else:
                 # 他人查询
                 if purelove_status:
                     purelove_text = "🛡️ 纯爱无敌状态：已开启"
                 else:
                     purelove_text = "⚠️ 纯爱无敌状态：未开启"
-                text_message = f': {target_nickname}的二次元老婆是{name}哒~\n\n{wife_status_str}\n\n{activity_status_str}\n\n📚 {education_str}\n💖 他们的好感度：{affection:.1f}\n{purelove_text}\n{kill_stats_str}'
+                text_message = f': {target_nickname}的二次元老婆是{name}哒~\n\n{wife_status_str}\n\n{activity_status_str}\n{dungeon_status_str}\n\n📚 {education_str}\n💖 他们的好感度：{affection:.1f}\n{purelove_text}\n{kill_stats_str}'
 
             # 尝试发送带图片的消息
             try:
