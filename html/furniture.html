@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>抽老婆系统 · 家具中心</title>
+    <style>
+      :root {
+        --bg: #0b1020;
+        --card: #121833;
+        --muted: #9fb0ff;
+        --text: #eef2ff;
+        --accent: #7c9cff;
+        --accent-2: #5be6c7;
+        --border: rgba(255, 255, 255, 0.12);
+        --shadow: 0 10px 30px rgba(0, 0, 0, 0.35), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+        --rarity-normal: #9ca3af;
+        --rarity-rare: #3b82f6;
+        --rarity-epic: #8b5cf6;
+        --rarity-legend: #fbbf24;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+        background: radial-gradient(1200px 800px at 10% 10%, #121a3a 0%, var(--bg) 60%),
+          radial-gradient(1000px 600px at 90% 10%, #0c2b3a 0%, transparent 60%), var(--bg);
+        color: var(--text);
+        display: grid;
+        place-items: center;
+        padding: 24px;
+      }
+
+      .wrap {
+        width: min(1400px, 100%);
+      }
+
+      .toolbar {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+      }
+      .toolbar .left {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .btn {
+        border: 1px solid var(--border);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+        color: var(--text);
+        padding: 10px 14px;
+        border-radius: 12px;
+        cursor: pointer;
+        box-shadow: var(--shadow);
+        font-weight: 600;
+        letter-spacing: 0.2px;
+        backdrop-filter: blur(8px);
+      }
+      .btn:hover {
+        transform: translateY(-1px);
+      }
+      .btn:active {
+        transform: translateY(0);
+      }
+      .btn.primary {
+        border-color: rgba(124, 156, 255, 0.5);
+        box-shadow: 0 10px 25px rgba(124, 156, 255, 0.25);
+      }
+      .btn.ghost {
+        background: transparent;
+      }
+
+      .card {
+        position: relative;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)), var(--card);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 22px;
+        overflow: hidden;
+        box-shadow: var(--shadow);
+        color: var(--text);
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+      }
+      .card::before {
+        content: "";
+        position: absolute;
+        inset: auto -50% 20% -50%;
+        height: 200px;
+        background: radial-gradient(600px 140px at 50% 50%, rgba(91, 230, 199, 0.18), transparent 55%);
+        pointer-events: none;
+      }
+
+      h1 {
+        margin: 0 0 14px 0;
+        font-size: clamp(20px, 4vw, 28px);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      h1 .tag {
+        font-size: 12px;
+        color: var(--bg);
+        background: var(--accent-2);
+        padding: 4px 8px;
+        border-radius: 999px;
+      }
+
+      .category-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 18px;
+      }
+
+      @media (max-width: 768px) {
+        .category-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .category-section {
+        border: 1px dashed var(--border);
+        border-radius: 16px;
+        padding: 16px;
+      }
+
+      .category-header {
+        margin: 0 0 12px 0;
+        font-size: 18px;
+        color: var(--accent-2);
+        font-weight: 700;
+        letter-spacing: 0.4px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .furniture-grid {
+        display: grid;
+        gap: 10px;
+      }
+
+      .furniture-item {
+        display: grid;
+        grid-template-columns: auto 1fr auto auto;
+        gap: 8px;
+        align-items: center;
+        padding: 8px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .rarity-badge {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+      .rarity-badge.normal {
+        background: var(--rarity-normal);
+      }
+      .rarity-badge.rare {
+        background: var(--rarity-rare);
+      }
+      .rarity-badge.epic {
+        background: var(--rarity-epic);
+      }
+      .rarity-badge.legend {
+        background: var(--rarity-legend);
+      }
+
+      .furniture-name {
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      .furniture-price {
+        font-size: 12px;
+        color: var(--accent);
+        font-weight: 600;
+      }
+
+      .furniture-space {
+        font-size: 11px;
+        color: var(--muted);
+        opacity: 0.8;
+      }
+
+      .furniture-desc {
+        grid-column: 2 / -1;
+        font-size: 12px;
+        color: var(--muted);
+        opacity: 0.9;
+        margin-top: 2px;
+        line-height: 1.4;
+      }
+
+      .stats-section {
+        margin-top: 20px;
+        padding: 16px;
+        border: 1px dashed var(--border);
+        border-radius: 16px;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-top: 12px;
+      }
+
+      .stat-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 12px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .stat-number {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--accent-2);
+        margin-bottom: 4px;
+      }
+
+      .stat-label {
+        font-size: 12px;
+        color: var(--muted);
+        opacity: 0.8;
+      }
+
+      .note {
+        font-size: 13px;
+        line-height: 1.6;
+        opacity: 0.95;
+        margin-top: 16px;
+      }
+
+      .footer {
+        margin-top: 16px;
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        color: #c7d2fe;
+        opacity: 0.8;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .legend {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+      }
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="toolbar">
+        <div class="left">
+          <button id="saveBtn" class="btn primary">📸 保存图片</button>
+          <button id="saveFullBtn" class="btn">🖼️ 保存（2x清晰）</button>
+          <span class="badge">提示：点按钮即可把下方家具目录保存为图片</span>
+        </div>
+        <button id="toggleBg" class="btn ghost" title="切换透明/有背景">背景开关</button>
+      </div>
+
+      <!-- 被保存的区域 -->
+      <article id="furnitureCard" class="card">
+        <header>
+          <h1>🪑 <span class="tag">家具中心 · 商品目录</span></h1>
+        </header>
+
+        <!-- 稀有度图例 -->
+        <div class="legend">
+          <div class="legend-item">
+            <span class="rarity-badge normal"></span>
+            <span>普通</span>
+          </div>
+          <div class="legend-item">
+            <span class="rarity-badge rare"></span>
+            <span>稀有</span>
+          </div>
+          <div class="legend-item">
+            <span class="rarity-badge epic"></span>
+            <span>史诗</span>
+          </div>
+          <div class="legend-item">
+            <span class="rarity-badge legend"></span>
+            <span>传说</span>
+          </div>
+        </div>
+
+        <!-- 家具分类展示 -->
+        <div class="category-grid">
+          <!-- 座椅类 -->
+          <section class="category-section">
+            <h2 class="category-header">🪑 座椅类</h2>
+            <div class="furniture-grid">
+              <div class="furniture-item">
+                <span class="rarity-badge normal"></span>
+                <span class="furniture-name">崭新的木椅</span>
+                <span class="furniture-price">💰500</span>
+                <span class="furniture-space">📦5</span>
+                <div class="furniture-desc">🪑 简单朴素的木制椅子，坐起来还算舒适</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge normal"></span>
+                <span class="furniture-name">游戏电竞椅</span>
+                <span class="furniture-price">💰3,500</span>
+                <span class="furniture-space">📦12</span>
+                <div class="furniture-desc">🎮 专业电竞椅，久坐不累，RGB灯效酷炫</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge normal"></span>
+                <span class="furniture-name">懒人沙发</span>
+                <span class="furniture-price">💰1,200</span>
+                <span class="furniture-space">📦8</span>
+                <div class="furniture-desc">🛋️ 软软的豆袋沙发，躺下就不想起来</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge rare"></span>
+                <span class="furniture-name">老板椅</span>
+                <span class="furniture-price">💰6,800</span>
+                <span class="furniture-space">📦15</span>
+                <div class="furniture-desc">💼 真皮老板椅，坐上去就有成功人士的感觉</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge rare"></span>
+                <span class="furniture-name">高贵的羊皮沙发</span>
+                <span class="furniture-price">💰15,000</span>
+                <span class="furniture-space">📦20</span>
+                <div class="furniture-desc">🛋️ 奢华的真皮沙发，坐上去就不想起来</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge epic"></span>
+                <span class="furniture-name">按摩躺椅</span>
+                <span class="furniture-price">💰30,000</span>
+                <span class="furniture-space">📦28</span>
+                <div class="furniture-desc">💆 高级按摩躺椅，疲劳一扫而光</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge legend"></span>
+                <span class="furniture-name">皇室宝座</span>
+                <span class="furniture-price">💰100,000</span>
+                <span class="furniture-space">📦45</span>
+                <div class="furniture-desc">👑 镶金嵌钻的皇室宝座，彰显至尊地位</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 桌子类 -->
+          <section class="category-section">
+            <h2 class="category-header">🍽️ 桌子类</h2>
+            <div class="furniture-grid">
+              <div class="furniture-item">
+                <span class="rarity-badge normal"></span>
+                <span class="furniture-name">简约茶几</span>
+                <span class="furniture-price">💰800</span>
+                <span class="furniture-space">📦8</span>
+                <div class="furniture-desc">☕ 简洁的白色茶几，放几本书很有格调</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge normal"></span>
+                <span class="furniture-name">书桌</span>
+                <span class="furniture-price">💰1,500</span>
+                <span class="furniture-space">📦12</span>
+                <div class="furniture-desc">📖 简约书桌，学习工作的好伙伴</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge normal"></span>
+                <span class="furniture-name">玻璃茶几</span>
+                <span class="furniture-price">💰2,200</span>
+                <span class="furniture-space">📦10</span>
+                <div class="furniture-desc">🔮 时尚玻璃茶几，透明设计显得空间更大</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge rare"></span>
+                <span class="furniture-name">升降办公桌</span>
+                <span class="furniture-price">💰4,500</span>
+                <span class="furniture-space">📦16</span>
+                <div class="furniture-desc">⬆️ 智能升降桌，站坐切换，健康办公</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge rare"></span>
+                <span class="furniture-name">豪华实木餐桌</span>
+                <span class="furniture-price">💰8,000</span>
+                <span class="furniture-space">📦25</span>
+                <div class="furniture-desc">🍽️ 厚重的实木餐桌，一家人围桌吃饭的温馨感</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge epic"></span>
+                <span class="furniture-name">古董八仙桌</span>
+                <span class="furniture-price">💰35,000</span>
+                <span class="furniture-space">📦30</span>
+                <div class="furniture-desc">🏮 清代古董八仙桌，文物级别的收藏品</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 床类 -->
+          <section class="category-section">
+            <h2 class="category-header">🛏️ 床类</h2>
+            <div class="furniture-grid">
+              <div class="furniture-item">
+                <span class="rarity-badge normal"></span>
+                <span class="furniture-name">温馨单人床</span>
+                <span class="furniture-price">💰2,000</span>
+                <span class="furniture-space">📦15</span>
+                <div class="furniture-desc">🛏️ 舒适的单人床，睡眠质量有保障</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge normal"></span>
+                <span class="furniture-name">上下铺</span>
+                <span class="furniture-price">💰2,800</span>
+                <span class="furniture-space">📦18</span>
+                <div class="furniture-desc">🏠 实用上下铺，节省空间的选择</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge rare"></span>
+                <span class="furniture-name">水床</span>
+                <span class="furniture-price">💰12,000</span>
+                <span class="furniture-space">📦32</span>
+                <div class="furniture-desc">🌊 新奇的水床体验，如在水中漂浮</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge rare"></span>
+                <span class="furniture-name">按摩床</span>
+                <span class="furniture-price">💰18,000</span>
+                <span class="furniture-space">📦28</span>
+                <div class="furniture-desc">💆 智能按摩床，睡觉的同时享受按摩</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge epic"></span>
+                <span class="furniture-name">奢华双人大床</span>
+                <span class="furniture-price">💰25,000</span>
+                <span class="furniture-space">📦35</span>
+                <div class="furniture-desc">🛌 五星级酒店同款大床，躺下就是享受</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge legend"></span>
+                <span class="furniture-name">悬浮床</span>
+                <span class="furniture-price">💰200,000</span>
+                <span class="furniture-space">📦40</span>
+                <div class="furniture-desc">🚀 科幻悬浮床，磁悬浮技术打造的未来睡眠体验</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 储物类 -->
+          <section class="category-section">
+            <h2 class="category-header">📦 储物类</h2>
+            <div class="furniture-grid">
+              <div class="furniture-item">
+                <span class="rarity-badge normal"></span>
+                <span class="furniture-name">鞋柜</span>
+                <span class="furniture-price">💰800</span>
+                <span class="furniture-space">📦8</span>
+                <div class="furniture-desc">👠 多层鞋柜，整齐收纳各种鞋子</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge normal"></span>
+                <span class="furniture-name">小巧书架</span>
+                <span class="furniture-price">💰1,200</span>
+                <span class="furniture-space">📦10</span>
+                <div class="furniture-desc">📚 简单的三层书架，放满书显得很有文化</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge normal"></span>
+                <span class="furniture-name">储物柜</span>
+                <span class="furniture-price">💰1,800</span>
+                <span class="furniture-space">📦15</span>
+                <div class="furniture-desc">📦 万能储物柜，什么都能装</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge rare"></span>
+                <span class="furniture-name">古典衣柜</span>
+                <span class="furniture-price">💰5,000</span>
+                <span class="furniture-space">📦30</span>
+                <div class="furniture-desc">👗 雕花精美的实木衣柜，储物空间很大</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge rare"></span>
+                <span class="furniture-name">保险箱</span>
+                <span class="furniture-price">💰15,000</span>
+                <span class="furniture-space">📦12</span>
+                <div class="furniture-desc">🔒 防盗保险箱，贵重物品的守护者</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge epic"></span>
+                <span class="furniture-name">智能衣帽间</span>
+                <span class="furniture-price">💰80,000</span>
+                <span class="furniture-space">📦60</span>
+                <div class="furniture-desc">👔 全自动智能衣帽间，AI帮你搭配服装</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 装饰类 -->
+          <section class="category-section">
+            <h2 class="category-header">🎨 装饰类</h2>
+            <div class="furniture-grid">
+              <div class="furniture-item">
+                <span class="rarity-badge normal"></span>
+                <span class="furniture-name">盆栽</span>
+                <span class="furniture-price">💰200</span>
+                <span class="furniture-space">📦2</span>
+                <div class="furniture-desc">🌱 小清新绿植，净化空气美化环境</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge normal"></span>
+                <span class="furniture-name">时尚落地灯</span>
+                <span class="furniture-price">💰600</span>
+                <span class="furniture-space">📦3</span>
+                <div class="furniture-desc">💡 现代风格的落地灯，营造温馨氛围</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge normal"></span>
+                <span class="furniture-name">镜子</span>
+                <span class="furniture-price">💰800</span>
+                <span class="furniture-space">📦3</span>
+                <div class="furniture-desc">🪞 大号梳妆镜，照出美丽的自己</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge normal"></span>
+                <span class="furniture-name">舒适地毯</span>
+                <span class="furniture-price">💰1,000</span>
+                <span class="furniture-space">📦12</span>
+                <div class="furniture-desc">🏺 柔软的羊毛地毯，光脚踩上去很舒服</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge normal"></span>
+                <span class="furniture-name">挂画</span>
+                <span class="furniture-price">💰1,500</span>
+                <span class="furniture-space">📦1</span>
+                <div class="furniture-desc">🖼️ 精美装饰画，提升房间艺术气息</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge rare"></span>
+                <span class="furniture-name">古董花瓶</span>
+                <span class="furniture-price">💰3,000</span>
+                <span class="furniture-space">📦2</span>
+                <div class="furniture-desc">🏺 精美的青花瓷花瓶，插几支花很优雅</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge rare"></span>
+                <span class="furniture-name">水族箱</span>
+                <span class="furniture-price">💰5,500</span>
+                <span class="furniture-space">📦20</span>
+                <div class="furniture-desc">🐠 大型水族箱，海底世界尽在眼前</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge rare"></span>
+                <span class="furniture-name">艺术雕像</span>
+                <span class="furniture-price">💰8,000</span>
+                <span class="furniture-space">📦6</span>
+                <div class="furniture-desc">🗿 精美的大理石雕像，艺术气息浓厚</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge rare"></span>
+                <span class="furniture-name">水晶吊灯</span>
+                <span class="furniture-price">💰12,000</span>
+                <span class="furniture-space">📦8</span>
+                <div class="furniture-desc">💎 璀璨的水晶吊灯，瞬间提升房间档次</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge legend"></span>
+                <span class="furniture-name">名画真迹</span>
+                <span class="furniture-price">💰500,000</span>
+                <span class="furniture-space">📦2</span>
+                <div class="furniture-desc">🎨 梵高向日葵真迹，无价的艺术珍品</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 家电类 -->
+          <section class="category-section">
+            <h2 class="category-header">🔌 家电类</h2>
+            <div class="furniture-grid">
+              <div class="furniture-item">
+                <span class="rarity-badge normal"></span>
+                <span class="furniture-name">微波炉</span>
+                <span class="furniture-price">💰800</span>
+                <span class="furniture-space">📦4</span>
+                <div class="furniture-desc">🔥 家用微波炉，快速加热美食</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge normal"></span>
+                <span class="furniture-name">智能音响</span>
+                <span class="furniture-price">💰2,200</span>
+                <span class="furniture-space">📦3</span>
+                <div class="furniture-desc">🔊 AI智能音响，声控播放你喜欢的音乐</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge normal"></span>
+                <span class="furniture-name">现代电视柜</span>
+                <span class="furniture-price">💰2,500</span>
+                <span class="furniture-space">📦18</span>
+                <div class="furniture-desc">📺 简约的电视柜，配套的储物空间刚好</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge normal"></span>
+                <span class="furniture-name">洗衣机</span>
+                <span class="furniture-price">💰3,500</span>
+                <span class="furniture-space">📦12</span>
+                <div class="furniture-desc">👕 全自动洗衣机，衣物清洁的好帮手</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge normal"></span>
+                <span class="furniture-name">空调</span>
+                <span class="furniture-price">💰4,200</span>
+                <span class="furniture-space">📦8</span>
+                <div class="furniture-desc">❄️ 变频空调，四季如春的舒适体验</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge rare"></span>
+                <span class="furniture-name">投影仪</span>
+                <span class="furniture-price">💰6,800</span>
+                <span class="furniture-space">📦5</span>
+                <div class="furniture-desc">📽️ 4K激光投影仪，家庭影院体验</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge rare"></span>
+                <span class="furniture-name">智能冰箱</span>
+                <span class="furniture-price">💰18,000</span>
+                <span class="furniture-space">📦22</span>
+                <div class="furniture-desc">❄️ 大容量智能冰箱，保鲜效果一流</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge epic"></span>
+                <span class="furniture-name">智能机器人</span>
+                <span class="furniture-price">💰50,000</span>
+                <span class="furniture-space">📦6</span>
+                <div class="furniture-desc">🤖 家务机器人，全自动打理家庭生活</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 健身类 -->
+          <section class="category-section">
+            <h2 class="category-header">💪 健身类</h2>
+            <div class="furniture-grid">
+              <div class="furniture-item">
+                <span class="rarity-badge normal"></span>
+                <span class="furniture-name">瑜伽垫</span>
+                <span class="furniture-price">💰300</span>
+                <span class="furniture-space">📦2</span>
+                <div class="furniture-desc">🧘 专业瑜伽垫，冥想健身两相宜</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge normal"></span>
+                <span class="furniture-name">哑铃架</span>
+                <span class="furniture-price">💰2,500</span>
+                <span class="furniture-space">📦10</span>
+                <div class="furniture-desc">💪 专业哑铃组合，力量训练必备</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge rare"></span>
+                <span class="furniture-name">跑步机</span>
+                <span class="furniture-price">💰8,000</span>
+                <span class="furniture-space">📦25</span>
+                <div class="furniture-desc">🏃 专业跑步机，在家就能享受跑步乐趣</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge epic"></span>
+                <span class="furniture-name">家用健身房</span>
+                <span class="furniture-price">💰120,000</span>
+                <span class="furniture-space">📦80</span>
+                <div class="furniture-desc">🏋️ 全套健身设备，私人健身房体验</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 厨房类 -->
+          <section class="category-section">
+            <h2 class="category-header">🍳 厨房类</h2>
+            <div class="furniture-grid">
+              <div class="furniture-item">
+                <span class="rarity-badge normal"></span>
+                <span class="furniture-name">燃气灶</span>
+                <span class="furniture-price">💰1,200</span>
+                <span class="furniture-space">📦6</span>
+                <div class="furniture-desc">🔥 双眼燃气灶，烹饪美食的基础设备</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge normal"></span>
+                <span class="furniture-name">烤箱</span>
+                <span class="furniture-price">💰2,800</span>
+                <span class="furniture-space">📦8</span>
+                <div class="furniture-desc">🍞 大容量烤箱，烘焙达人必备</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge rare"></span>
+                <span class="furniture-name">橱柜</span>
+                <span class="furniture-price">💰8,500</span>
+                <span class="furniture-space">📦30</span>
+                <div class="furniture-desc">🍽️ 整体橱柜，厨房收纳的完美解决方案</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge legend"></span>
+                <span class="furniture-name">智能厨房系统</span>
+                <span class="furniture-price">💰300,000</span>
+                <span class="furniture-space">📦50</span>
+                <div class="furniture-desc">👨‍🍳 AI智能厨房，机器人大厨为你烹饪</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 娱乐类 -->
+          <section class="category-section">
+            <h2 class="category-header">🎮 娱乐类</h2>
+            <div class="furniture-grid">
+              <div class="furniture-item">
+                <span class="rarity-badge normal"></span>
+                <span class="furniture-name">游戏机</span>
+                <span class="furniture-price">💰3,000</span>
+                <span class="furniture-space">📦4</span>
+                <div class="furniture-desc">🎮 最新游戏主机，畅玩各种大作</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge rare"></span>
+                <span class="furniture-name">麻将桌</span>
+                <span class="furniture-price">💰5,000</span>
+                <span class="furniture-space">📦20</span>
+                <div class="furniture-desc">🀄 自动麻将桌，朋友聚会的好选择</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge rare"></span>
+                <span class="furniture-name">台球桌</span>
+                <span class="furniture-price">💰15,000</span>
+                <span class="furniture-space">📦35</span>
+                <div class="furniture-desc">🎱 专业台球桌，绅士运动的优雅体现</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge epic"></span>
+                <span class="furniture-name">KTV包间</span>
+                <span class="furniture-price">💰80,000</span>
+                <span class="furniture-space">📦60</span>
+                <div class="furniture-desc">🎤 专业KTV设备，在家就能开演唱会</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 特殊类 -->
+          <section class="category-section">
+            <h2 class="category-header">✨ 特殊类</h2>
+            <div class="furniture-grid">
+              <div class="furniture-item">
+                <span class="rarity-badge epic"></span>
+                <span class="furniture-name">红酒收藏柜</span>
+                <span class="furniture-price">💰20,000</span>
+                <span class="furniture-space">📦25</span>
+                <div class="furniture-desc">🍷 恒温红酒柜，展示收藏的好酒</div>
+              </div>
+              <div class="furniture-item">
+                <span class="rarity-badge legend"></span>
+                <span class="furniture-name">钢琴</span>
+                <span class="furniture-price">💰50,000</span>
+                <span class="furniture-space">📦40</span>
+                <div class="furniture-desc">🎹 优雅的三角钢琴，琴声悠扬动人</div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- 统计信息 -->
+        <section class="stats-section">
+          <h2 class="category-header">📊 家具统计</h2>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-number">65</div>
+              <div class="stat-label">家具总数</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number">11</div>
+              <div class="stat-label">分类数量</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number">200</div>
+              <div class="stat-label">最低价格</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number">500,000</div>
+              <div class="stat-label">最高价格</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number">1</div>
+              <div class="stat-label">最小空间</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number">80</div>
+              <div class="stat-label">最大空间</div>
+            </div>
+          </div>
+
+          <div class="note">
+            • 💡 使用「购买家具 家具名称」购买心仪的家具<br />
+            • 💰 购买家具需要消耗金币，不同稀有度价格差异很大<br />
+            • 📦 每件家具都有空间占用，需要确保房产空间充足<br />
+            • 🏠 房产等级越高，可容纳的家具空间越大<br />
+            • 💸 家具可以出售换取金币，出售价格为购买价格的50%<br />
+            • ⭐ 稀有度：普通 < 稀有 < 史诗 < 传说<br />
+            • 🎨 家具不仅是装饰，更是身份和品味的象征<br />
+            • 🔄 合理搭配不同类型的家具，打造完美的居住空间
+          </div>
+        </section>
+
+        <div class="footer">
+          <div>版本：v1.0 · 家具中心商品目录</div>
+          <div>制作者：Taro ✨</div>
+        </div>
+      </article>
+    </div>
+
+    <!-- html2canvas 用于截图保存 -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script>
+      const card = document.getElementById("furnitureCard");
+      const saveBtn = document.getElementById("saveBtn");
+      const saveFullBtn = document.getElementById("saveFullBtn");
+      const toggleBg = document.getElementById("toggleBg");
+
+      saveBtn.addEventListener("click", () => saveCard(1));
+      saveFullBtn.addEventListener("click", () => saveCard(2));
+
+      function saveCard(scale) {
+        const dpr = window.devicePixelRatio || 1;
+        const bgColor = transparent ? null : getComputedStyle(document.body).backgroundColor;
+        html2canvas(card, {
+          backgroundColor: bgColor || "#0b1020",
+          scale: dpr * scale,
+          useCORS: true,
+          logging: false,
+          windowWidth: document.documentElement.scrollWidth,
+        }).then((canvas) => {
+          canvas.toBlob((blob) => {
+            const a = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            a.href = url;
+            a.download = `furniture.png`;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+              URL.revokeObjectURL(url);
+              a.remove();
+            }, 0);
+          });
+        });
+      }
+
+      let transparent = false;
+      toggleBg.addEventListener("click", () => {
+        transparent = !transparent;
+        document.body.style.background = transparent ? "transparent" : "";
+        toggleBg.textContent = transparent ? "背景：透明" : "背景：渐变";
+      });
+    </script>
+  </body>
+</html>

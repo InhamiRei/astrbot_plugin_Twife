@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>抽老婆系统 · 菜单</title>
+    <style>
+      :root {
+        --bg: #0b1020;
+        --card: #121833;
+        --muted: #9fb0ff;
+        --text: #eef2ff;
+        --accent: #7c9cff;
+        --accent-2: #5be6c7;
+        --border: rgba(255, 255, 255, 0.12);
+        --shadow: 0 10px 30px rgba(0, 0, 0, 0.35), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+        background: radial-gradient(1200px 800px at 10% 10%, #121a3a 0%, var(--bg) 60%),
+          radial-gradient(1000px 600px at 90% 10%, #0c2b3a 0%, transparent 60%), var(--bg);
+        color: var(--text);
+        display: grid;
+        place-items: center;
+        padding: 24px;
+      }
+
+      .wrap {
+        width: min(1200px, 100%);
+      }
+
+      .toolbar {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+      }
+      .toolbar .left {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .btn {
+        border: 1px solid var(--border);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+        color: var(--text);
+        padding: 10px 14px;
+        border-radius: 12px;
+        cursor: pointer;
+        box-shadow: var(--shadow);
+        font-weight: 600;
+        letter-spacing: 0.2px;
+        backdrop-filter: blur(8px);
+      }
+      .btn:hover {
+        transform: translateY(-1px);
+      }
+      .btn:active {
+        transform: translateY(0);
+      }
+      .btn.primary {
+        border-color: rgba(124, 156, 255, 0.5);
+        box-shadow: 0 10px 25px rgba(124, 156, 255, 0.25);
+      }
+      .btn.ghost {
+        background: transparent;
+      }
+
+      .card {
+        position: relative;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)), var(--card);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 22px;
+        overflow: hidden;
+        box-shadow: var(--shadow);
+        color: var(--text);
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+      }
+      .card::before {
+        content: "";
+        position: absolute;
+        inset: auto -50% 20% -50%;
+        height: 200px;
+        background: radial-gradient(600px 140px at 50% 50%, rgba(91, 230, 199, 0.18), transparent 55%);
+        pointer-events: none;
+      }
+
+      h1 {
+        margin: 0 0 14px 0;
+        font-size: clamp(20px, 4vw, 28px);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      h1 .tag {
+        font-size: 12px;
+        color: var(--bg);
+        background: var(--accent-2);
+        padding: 4px 8px;
+        border-radius: 999px;
+      }
+
+      .cols {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 18px;
+      }
+      @media (max-width: 820px) {
+        .cols {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .section {
+        border: 1px dashed var(--border);
+        border-radius: 16px;
+        padding: 14px;
+      }
+      .section h2 {
+        margin: 0 0 10px 0;
+        font-size: 16px;
+        color: var(--muted);
+        font-weight: 700;
+        letter-spacing: 0.4px;
+      }
+
+      ol.menu {
+        margin: 0;
+        padding-left: 20px;
+        display: grid;
+        gap: 8px;
+      }
+      ol.menu li {
+        line-height: 1.5;
+      }
+
+      .kv-list {
+        display: grid;
+        gap: 10px;
+      }
+      .kv {
+        display: grid;
+        grid-template-columns: 160px 1fr;
+        gap: 8px;
+        align-items: start;
+      }
+      .kv .k {
+        color: var(--muted);
+      }
+
+      .note {
+        font-size: 13px;
+        line-height: 1.6;
+        opacity: 0.95;
+      }
+      .footer {
+        margin-top: 16px;
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        color: #c7d2fe;
+        opacity: 0.8;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.04);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="toolbar">
+        <div class="left">
+          <button id="saveBtn" class="btn primary">📸 保存图片</button>
+          <button id="saveFullBtn" class="btn">🖼️ 保存（2x清晰）</button>
+          <span class="badge">提示：点按钮即可把下方菜单保存为图片</span>
+        </div>
+        <button id="toggleBg" class="btn ghost" title="切换透明/有背景">背景开关</button>
+      </div>
+
+      <!-- 被保存的区域 -->
+      <article id="menuCard" class="card">
+        <header>
+          <h1><span class="tag">抽老婆系统 · 指令菜单</span></h1>
+        </header>
+
+        <div class="cols">
+          <section class="section">
+            <h2>【抽老婆系统】指令菜单</h2>
+            <ol class="menu">
+              <li>抽老婆 - 抽取10位候选老婆供选择（重复使用可重新抽取）</li>
+              <li>确认老婆 名字 - 从候选列表中选择心仪的老婆</li>
+              <li>查老婆 - 查看自己或他人的老婆（包含老婆属性信息）</li>
+              <li>牛老婆 - 尝试NTR别人的老婆（需要@对方）</li>
+              <li>净身出户 - 和当前老婆离婚</li>
+              <li>纯爱无敌 - 获得永久保护，完全防止被NTR</li>
+              <li>纯爱破碎 - 取消纯爱无敌保护状态</li>
+              <li>牛头人无可匹敌 - 获得额外的牛老婆机会</li>
+              <li>牛头人盛宴 - 尝试开启盛宴，提高牛老婆成功率</li>
+              <li>房产中心 - 查看房产信息和升级列表</li>
+              <li>升级房产 - 使用金币升级房产</li>
+              <li>出门转转 - 外出探险，随机获得物品或金币变化</li>
+              <li>资产查询 - 查看个人资产（金币、背包、房产）</li>
+              <li>赠送礼物 物品名 - 给老婆送礼物增加好感度和属性</li>
+              <li>出售物品 物品名 - 将物品出售换取金币</li>
+              <li>超市列表 - 查看超市中所有可购买的商品</li>
+              <li>快餐店列表 - 查看快餐店菜单(高饥饿值恢复)</li>
+              <li>苍蝇馆子 - 查看地方特色菜(价格昂贵但效果拔群)</li>
+              <li>购买物品 物品名 数量 - 购买指定物品(超市/快餐店/苍蝇馆子)</li>
+              <li>出门学习 小时数 - 让老婆出门学习(1-12小时)</li>
+              <li>打工列表 - 查看所有可用的打工工作</li>
+              <li>出门打工 序号 - 让老婆去指定工作打工</li>
+              <li>家具中心 - 查看家具商店，购买各种家具装饰房产</li>
+              <li>家具中心-图片 - 查看精美的家具目录图片</li>
+              <li>购买家具 家具名 - 购买指定家具装饰房产</li>
+              <li>出售家具 家具名 - 出售不需要的家具换取金币</li>
+              <li>老婆属性 - 查询老婆的妹抖值、撒娇值、傲娇值、黑化率、反差萌（可培养）</li>
+              <li>地下城列表 - 查看可进入的地下城列表</li>
+              <li>前往地下城 序号 - 进入指定地下城进行冒险战斗</li>
+              <li>一键出售战利品 - 快速出售所有地下城获得的战利品</li>
+              <li>抽老婆菜单 - 显示本菜单</li>
+            </ol>
+          </section>
+
+          <section class="section">
+            <h2>【用户数据】</h2>
+            <div class="kv-list">
+              <div class="kv">
+                <div class="k">💰 金币</div>
+                <div class="v">永久保存，可用于各种活动</div>
+              </div>
+              <div class="kv">
+                <div class="k">🎒 背包</div>
+                <div class="v">存放各种物品（如巧克力、鲜花等）</div>
+              </div>
+              <div class="kv">
+                <div class="k">🏠 房产</div>
+                <div class="v">可通过金币升级，共14个等级</div>
+              </div>
+            </div>
+
+            <h2 style="margin-top: 14px">【老婆属性】</h2>
+            <div class="kv-list">
+              <div class="kv">
+                <div class="k">🆙 等级</div>
+                <div class="v">影响老婆的能力，默认Lv.1</div>
+              </div>
+              <div class="kv">
+                <div class="k">📈 成长值</div>
+                <div class="v">递增制经验系统，等级越高需要越多经验</div>
+              </div>
+              <div class="kv">
+                <div class="k">🍽️ 饥饿</div>
+                <div class="v">数值显示，影响老婆心情</div>
+              </div>
+              <div class="kv">
+                <div class="k">🧼 清洁</div>
+                <div class="v">数值显示，影响健康状况</div>
+              </div>
+              <div class="kv">
+                <div class="k">❤️ 健康</div>
+                <div class="v">数值显示，影响整体状态</div>
+              </div>
+              <div class="kv">
+                <div class="k">😊 心情</div>
+                <div class="v">数值显示，影响互动效果</div>
+              </div>
+              <div class="kv">
+                <div class="k">🏷️ 状态</div>
+                <div class="v">正常/生病/开心等文字描述</div>
+              </div>
+              <div class="kv">
+                <div class="k">💖 好感度</div>
+                <div class="v">0-100，可通过赠送礼物提升</div>
+              </div>
+              <div class="kv">
+                <div class="k">📚 学历</div>
+                <div class="v">从幼儿园到全知全能，共12个等级</div>
+              </div>
+              <div class="kv">
+                <div class="k">💡 学识</div>
+                <div class="v">通过出门学习获得，满足条件可升级学历</div>
+              </div>
+            </div>
+
+            <h2 style="margin-top: 14px">【特殊属性系统】</h2>
+            <div class="kv-list">
+              <div class="kv">
+                <div class="k">💝 妹抖值</div>
+                <div class="v">从0开始，可培养的萌系属性</div>
+              </div>
+              <div class="kv">
+                <div class="k">💕 撒娇值</div>
+                <div class="v">从0开始，可培养的撒娇属性</div>
+              </div>
+              <div class="kv">
+                <div class="k">😤 傲娇值</div>
+                <div class="v">从0开始，可培养的傲娇属性</div>
+              </div>
+              <div class="kv">
+                <div class="k">🖤 黑化率</div>
+                <div class="v">从0开始，可培养的黑化属性</div>
+              </div>
+              <div class="kv">
+                <div class="k">✨ 反差萌</div>
+                <div class="v">从0开始，可培养的反差属性</div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <section class="section" style="margin-top: 16px">
+          <h2>【系统特色】</h2>
+          <div class="kv-list">
+            <div class="kv">
+              <div class="k">🎮 模块化架构</div>
+              <div class="v">完全重构的模块化设计，稳定可靠</div>
+            </div>
+            <div class="kv">
+              <div class="k">📊 老婆属性系统</div>
+              <div class="v">等级、成长值、饥饿、清洁、健康、心情</div>
+            </div>
+            <div class="kv">
+              <div class="k">🏫 学历系统</div>
+              <div class="v">从幼儿园到全知全能的12个等级</div>
+            </div>
+            <div class="kv">
+              <div class="k">🏠 房产系统</div>
+              <div class="v">14个等级的房产升级，空间限制，售出加成</div>
+            </div>
+            <div class="kv">
+              <div class="k">🪑 家具系统</div>
+              <div class="v">65种精美家具，11个分类，装饰房产提升身价</div>
+            </div>
+            <div class="kv">
+              <div class="k">💰 经济系统</div>
+              <div class="v">金币、背包、超市购物、身价计算</div>
+            </div>
+            <div class="kv">
+              <div class="k">🍗 快餐系统</div>
+              <div class="v">快餐店高饥饿值食物，大幅满足老婆食欲</div>
+            </div>
+            <div class="kv">
+              <div class="k">🏮 苍蝇馆子系统</div>
+              <div class="v">15种地方特色菜，价格昂贵但效果拔群</div>
+            </div>
+            <div class="kv">
+              <div class="k">📚 学习系统</div>
+              <div class="v">出门学习增加学识和经验</div>
+            </div>
+            <div class="kv">
+              <div class="k">💼 打工系统</div>
+              <div class="v">多种工作选择，等级学历要求</div>
+            </div>
+            <div class="kv">
+              <div class="k">💕 情感系统</div>
+              <div class="v">好感度、纯爱保护</div>
+            </div>
+            <div class="kv">
+              <div class="k">⚔️ NTR系统</div>
+              <div class="v">牛头人盛宴、无敌状态</div>
+            </div>
+            <div class="kv">
+              <div class="k">🗡️ 地下城系统</div>
+              <div class="v">冒险战斗、杀怪统计、结晶收集</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" style="margin-top: 16px">
+          <h2>【注意事项】</h2>
+          <div class="note">
+            • 抽老婆现在会提供10位候选老婆供选择<br />
+            • 使用「确认老婆 名字」来最终选择老婆<br />
+            • 如果不满意候选列表，可再次使用「抽老婆」重新抽取<br />
+            • 抽老婆有1分钟冷却时间，避免短时间内重复抽取<br />
+            • 确认老婆后才会正式获得老婆并显示图片<br />
+            • 抽老婆过程不会刷屏，只有确认时才发图片<br />
+            • 抽到的老婆永久有效<br />
+            • 金币、背包、房产数据根据QQ号永久保存<br />
+            • 换老婆或被NTR时，个人数据不会丢失，但好感度重置<br />
+            • 换老婆或被NTR时，老婆属性会重置为默认值<br />
+            • 纯爱无敌可永久防止被NTR<br />
+            • 刚牛走的老婆需要5分钟冷却才能开启纯爱无敌<br />
+            • 牛头人盛宴持续5分钟<br />
+            • 抽老婆/净身出户有10%几率遇到特殊事件<br />
+            • 房产升级需要消耗金币，等级越高费用越高<br />
+            • 出门转转每人每天最多3次，次数每日重置<br />
+            • 出门转转有70%几率获得物品，30%几率触发金币事件<br />
+            • 出门转转可获得6大类50+种不同物品<br />
+            • 出门转转可能获得或损失金币，金币不会为负数<br />
+            • 不同物品有不同属性效果：食物增加饥饿值，清洁用品增加清洁度，药物增加健康值，大部分物品增加心情<br />
+            • 超市提供10种精选商品：日用品+滑稽物品，不刷屏<br />
+            • 快餐店提供11种快餐食物，高饥饿值恢复，适合快速填饱老婆<br />
+            • 苍蝇馆子提供15种地方特色菜，价格昂贵(250-420金币)但效果拔群<br />
+            • 苍蝇馆子涵盖全国各地经典美食，饥饿值和心情值提升显著<br />
+            • 购买物品支持批量购买，一次最多99个，数量不填默认为1<br />
+            • 购买的物品会直接放入背包，可用于赠送礼物或出售<br />
+            • 滑稽物品有特殊效果和购买回应，值得尝试<br />
+            • 出门学习可以增加老婆的学识和成长值，但会降低饥饿值<br />
+            • 学习时间1-12小时，学习期间无法开始新的学习<br />
+            • 学识达到要求时会自动升级学历<br />
+            • 学习状态支持重启保护，机器人重启不会丢失学习进度<br />
+            • 离线期间完成的学习会在重新发言时通知<br />
+            • 打工系统提供15种不同工作，薪资从100到8000金币不等<br />
+            • 打工与老婆的等级和学历挂钩，等级越高薪资越高<br />
+            • 初始可做【捡废品】和【群里搬屎】，随着成长解锁更多工作<br />
+            • 打工列表只显示当前等级能做的工作，避免刷屏<br />
+            • 打工可以获得金币和经验，但会消耗饥饿、清洁、心情等属性<br />
+            • 打工和学习不能同时进行，需要等待一个完成后才能开始另一个<br />
+            • 打工状态同样支持重启保护，离线完成会自动通知<br />
+            • 不同工作有不同的收益和消耗，高薪工作通常消耗更多体力<br />
+            • 特殊属性系统包含妹抖值、撒娇值、傲娇值、黑化率、反差萌，均从0开始等待培养<br />
+            • 可通过【老婆属性】命令查询所有特殊属性的当前数值<br />
+            • 地下城系统提供冒险战斗玩法，可击败怪物获得战利品和结晶<br />
+            • 地下城战斗支持杀怪统计，记录个人战斗成就<br />
+            • 地下城获得的战利品可通过【一键出售战利品】快速变现
+          </div>
+        </section>
+
+        <div class="footer">
+          <div>版本：v1.4</div>
+          <div>制作者：Taro ✨</div>
+        </div>
+      </article>
+    </div>
+
+    <!-- html2canvas 用于截图保存 -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script>
+      const card = document.getElementById("menuCard");
+      const saveBtn = document.getElementById("saveBtn");
+      const saveFullBtn = document.getElementById("saveFullBtn");
+      const toggleBg = document.getElementById("toggleBg");
+
+      saveBtn.addEventListener("click", () => saveCard(1));
+      saveFullBtn.addEventListener("click", () => saveCard(2));
+
+      function saveCard(scale) {
+        const dpr = window.devicePixelRatio || 1;
+        const bgColor = transparent ? null : getComputedStyle(document.body).backgroundColor;
+        html2canvas(card, {
+          backgroundColor: bgColor || "#0b1020",
+          scale: dpr * scale,
+          useCORS: true,
+          logging: false,
+          windowWidth: document.documentElement.scrollWidth,
+        }).then((canvas) => {
+          canvas.toBlob((blob) => {
+            const a = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            a.href = url;
+            a.download = `menu.png`;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+              URL.revokeObjectURL(url);
+              a.remove();
+            }, 0);
+          });
+        });
+      }
+
+      let transparent = false;
+      toggleBg.addEventListener("click", () => {
+        transparent = !transparent;
+        document.body.style.background = transparent ? "transparent" : "";
+        toggleBg.textContent = transparent ? "背景：透明" : "背景：渐变";
+      });
+    </script>
+  </body>
+</html>
