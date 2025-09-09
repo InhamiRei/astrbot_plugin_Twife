@@ -531,6 +531,62 @@ def get_kill_stats_display(user_id: str):
     
     return "，".join(stats_text)
 
+# === 奖池数据管理 ===
+prize_pool_data = {"pool": 0}  # 全局奖池数据
+
+def load_prize_pool():
+    """加载奖池数据"""
+    global prize_pool_data
+    print(f"加载奖池数据文件: {PRIZE_POOL_FILE}")
+    if not os.path.exists(PRIZE_POOL_FILE):
+        print("奖池数据文件不存在，创建默认文件")
+        default_pool = {"pool": 0}  # 初始奖池为0
+        with open(PRIZE_POOL_FILE, 'w', encoding='utf-8') as f:
+            json.dump(default_pool, f, ensure_ascii=False, indent=4)
+        prize_pool_data = default_pool
+    else:
+        print("奖池数据文件存在，开始读取")
+        with open(PRIZE_POOL_FILE, 'r', encoding='utf-8') as f:
+            prize_pool_data = json.load(f)
+        print(f"成功加载奖池数据，当前奖池: {prize_pool_data['pool']}")
+
+def save_prize_pool():
+    """保存奖池数据"""
+    with open(PRIZE_POOL_FILE, 'w', encoding='utf-8') as f:
+        json.dump(prize_pool_data, f, ensure_ascii=False, indent=4)
+
+def get_prize_pool():
+    """获取当前奖池金额"""
+    if not prize_pool_data:
+        load_prize_pool()
+    return prize_pool_data.get("pool", 0)
+
+def add_to_prize_pool(amount):
+    """向奖池添加金币"""
+    if not prize_pool_data:
+        load_prize_pool()
+    prize_pool_data["pool"] = prize_pool_data.get("pool", 0) + amount
+    save_prize_pool()
+    print(f"向奖池添加 {amount} 金币，当前奖池: {prize_pool_data['pool']}")
+
+def reduce_prize_pool(amount):
+    """从奖池扣除金币（中奖时使用）"""
+    if not prize_pool_data:
+        load_prize_pool()
+    current_pool = prize_pool_data.get("pool", 0)
+    new_pool = max(0, current_pool - amount)  # 确保奖池不会为负数
+    prize_pool_data["pool"] = new_pool
+    save_prize_pool()
+    print(f"从奖池扣除 {amount} 金币，当前奖池: {prize_pool_data['pool']}")
+
+def clear_prize_pool():
+    """清空奖池（一等奖中奖时使用）"""
+    if not prize_pool_data:
+        load_prize_pool()
+    prize_pool_data["pool"] = 0
+    save_prize_pool()
+    print("奖池已清空")
+
 # 初始化所有数据
 def initialize_all_data():
     """初始化所有数据"""
@@ -543,4 +599,5 @@ def initialize_all_data():
     load_work_status()
     load_dungeon_data()
     load_no_at_users()
+    load_prize_pool()
     print("所有数据初始化完成")

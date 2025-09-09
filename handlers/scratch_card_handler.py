@@ -1,37 +1,28 @@
-"""刮刮乐处理器"""
+"""咕咕嘎嘎处理器"""
 import random
 from astrbot.api.all import *
 from ..core.data_manager import *
 
 class ScratchCardHandler:
     def __init__(self):
-        # 定义刮刮乐的奖励配置
-        self.SCRATCH_COST = 50  # 每次刮刮乐花费50金币
+        # 定义咕咕嘎嘎的奖励配置
+        self.SCRATCH_COST = 100  # 每次咕咕嘎嘎花费100金币
         
-        # 奖励配置：(奖励金额, 权重, 描述)
+        # 普通奖励配置：(奖励金额, 权重, 描述)
         self.SCRATCH_REWARDS = [
-            # 小奖（高概率）
-            (0, 400, "谢谢参与"),
-            (20, 200, "小奖"),
-            (50, 150, "回本奖"),
-            (100, 100, "双倍奖"),
-            (200, 80, "小赚一笔"),
-            
-            # 中奖（中等概率）
-            (500, 40, "中奖啦"),
-            (1000, 25, "幸运儿"),
-            (2000, 15, "运气不错"),
-            (5000, 10, "大运当头"),
-            (10000, 8, "发财了"),
-            
-            # 大奖（低概率）
-            (20000, 5, "暴富"),
-            (50000, 3, "一夜暴富"),
-            (100000, 2, "人生赢家"),
-            (200000, 1, "传说中的幸运儿"),
-            
-            # 超级大奖（极低概率）
-            (800000, 0.1, "史诗级大奖🎉")  # 80万大奖，极低概率
+            # 常规奖励（高概率）
+            (0, 5000, "谢谢惠顾"),
+            (20, 1000, "小奖"),
+            (50, 800, "小赚"),
+            (100, 500, "回本"),
+            (200, 300, "翻倍"),
+            (500, 150, "中奖"),
+            (1000, 80, "好运"),
+            (2000, 40, "大奖"),
+
+            ("三等奖", 1, "三等奖"),    # 20%咕咕嘎嘎池
+            ("二等奖", 0.5, "二等奖"),   # 50%咕咕嘎嘎池
+            ("一等奖", 0.1, "一等奖")    # 100%咕咕嘎嘎池
         ]
         
         # 特殊效果文本
@@ -156,70 +147,36 @@ class ScratchCardHandler:
                 "🎯 万里挑一",
                 "🧨 福运连连"
             ],
-            20000: [
-                "🎊 暴富啦",
-                "💸 一夜暴富的感觉",
-                "🌈 好运彩虹",
-                "🚀 飞速致富",
-                "🏆 幸运非凡",
-                "💎 小目标达成",
-                "🥳 狂欢时刻",
-                "🎉 惊天好消息",
-                "🍀 好运全开",
-                "📈 人生高光"
+            "三等奖": [
+                "🎉 恭喜中三等奖",
+                "🍀 幸运降临",
+                "🎯 不错的运气",
+                "💎 小有收获",
+                "🌟 咕咕嘎嘎池分红"
             ],
-            50000: [
-                "🌟 传说级运气",
-                "👑 你就是天选之人",
-                "🎇 好运盛典",
-                "💎 财富爆棚",
-                "🚀 直上云霄",
-                "🎯 超级大奖",
-                "🏅 好运榜首",
-                "🥳 传说再现",
-                "🍀 好运无敌",
-                "🎆 星辰守护"
+            "二等奖": [
+                "🎊 恭喜中二等奖",
+                "🚀 运气爆棚",
+                "💰 半池奖金",
+                "👑 实力与运气并存",
+                "🎆 令人羡慕"
             ],
-            100000: [
-                "🏆 人生赢家",
-                "💎 钻石级运气",
-                "🌟 光芒万丈",
-                "🎉 百万预备",
-                "📈 财运大涨",
-                "👑 王者降临",
-                "🚀 冲破天际",
-                "🥂 豪气冲天",
-                "💥 超级好运",
-                "🎯 一击必中"
-            ],
-            200000: [
-                "🎯 传说中的幸运儿",
-                "🌈 彩虹般的运气",
-                "🏆 高光时刻",
-                "💎 财富升级",
-                "🎉 令人艳羡",
-                "🚀 好运极速",
-                "👑 王者气质",
-                "🥳 全民羡慕",
-                "🍀 大奖收割机",
-                "🎆 历史留名"
-            ],
-            800000: [
-                "🎆🎉 史诗级大奖 🎉🎆",
-                "👑 恭喜成为刮刮乐之王 👑",
-                "💰💰 80万巨奖到手 💰💰",
+            "一等奖": [
+                "🎆🎉 恭喜中一等奖 🎉🎆",
+                "👑 恭喜成为咕咕嘎嘎之王 👑",
+                "💰💰 咕咕嘎嘎池全归你 💰💰",
                 "🌟 命运的奇迹",
                 "🚀 一飞冲天",
-                "🏆 百万级荣誉",
+                "🏆 传奇人生",
                 "🎇 财富巅峰",
-                "💎 传奇人生",
-                "🥂 世界见证",
-                "🎊 无敌好运"
+                "💎 无敌好运",
+                "🥂 全服瞩目",
+                "🎊 史诗时刻"
             ]
         }
 
     async def scratch_card(self, event: AstrMessageEvent):
-        """刮刮乐功能"""
+        """咕咕嘎嘎功能"""
         try:
             user_id = str(event.get_sender_id())
             nickname = event.get_sender_name()
@@ -233,14 +190,40 @@ class ScratchCardHandler:
         
         # 检查金币是否足够
         if current_coins < self.SCRATCH_COST:
-            yield event.plain_result(f': {nickname}，刮刮乐需要{self.SCRATCH_COST}金币，你当前只有{current_coins}金币，金币不足！')
+            yield event.plain_result(f': {nickname}，咕咕嘎嘎需要{self.SCRATCH_COST}金币，你当前只有{current_coins}金币，金币不足！')
             return
         
-        # 扣除费用
+        # 扣除费用并添加到咕咕嘎嘎池
         new_coins = current_coins - self.SCRATCH_COST
+        add_to_prize_pool(self.SCRATCH_COST)
         
         # 随机抽取奖励
-        reward_amount, description = self._get_random_reward()
+        reward_result = self._get_random_reward()
+        
+        # 处理奖励
+        if isinstance(reward_result[0], str):
+            # 咕咕嘎嘎池奖励
+            prize_type = reward_result[0]
+            description = reward_result[1]
+            current_pool = get_prize_pool()
+            
+            if prize_type == "三等奖":
+                reward_amount = int(current_pool * 0.2)
+                # 清空咕咕嘎嘎池的20%
+                reduce_prize_pool(reward_amount)
+            elif prize_type == "二等奖":
+                reward_amount = int(current_pool * 0.5)
+                # 清空咕咕嘎嘎池的50%
+                reduce_prize_pool(reward_amount)
+            elif prize_type == "一等奖":
+                reward_amount = current_pool
+                # 清空整个咕咕嘎嘎池
+                clear_prize_pool()
+        else:
+            # 普通奖励
+            reward_amount = reward_result[0]
+            description = reward_result[1]
+            prize_type = None
         
         # 加上奖励
         final_coins = new_coins + reward_amount
@@ -249,9 +232,24 @@ class ScratchCardHandler:
         update_user_data(user_id, coins=final_coins)
         
         # 构建结果消息
-        result_msg = self._build_result_message(nickname, reward_amount, description, current_coins, final_coins)
+        result_msg = self._build_result_message(nickname, reward_amount, description, current_coins, final_coins, prize_type)
         
         yield event.plain_result(result_msg)
+    
+    async def prize_pool_query(self, event: AstrMessageEvent):
+        """咕咕嘎嘎咕咕嘎嘎池查询功能"""
+        current_pool = get_prize_pool()
+        
+        pool_msg = "🎊 咕咕嘎嘎咕咕嘎嘎池状态 🎊\n\n"
+        pool_msg += f"💰 当前咕咕嘎嘎池金额: {current_pool:,}金币\n\n"
+        pool_msg += "🏆 咕咕嘎嘎池奖励说明:\n"
+        pool_msg += f"🥇 一等奖: {current_pool:,}金币 (咕咕嘎嘎池100%)\n"
+        pool_msg += f"🥈 二等奖: {int(current_pool * 0.5):,}金币 (咕咕嘎嘎池50%)\n"
+        pool_msg += f"🥉 三等奖: {int(current_pool * 0.2):,}金币 (咕咕嘎嘎池20%)\n\n"
+        pool_msg += "💡 每次咕咕嘎嘎花费100金币，全部进入咕咕嘎嘎池\n"
+        pool_msg += "🍀 中奖概率极低，运气决定一切！"
+        
+        yield event.plain_result(pool_msg)
 
     def _get_random_reward(self):
         """根据权重随机获取奖励"""
@@ -267,51 +265,54 @@ class ScratchCardHandler:
         chosen_reward = random.choices(rewards, weights=weights)[0]
         return chosen_reward
 
-    def _build_result_message(self, nickname, reward_amount, description, old_coins, new_coins):
+    def _build_result_message(self, nickname, reward_amount, description, old_coins, new_coins, prize_type=None):
         """构建结果消息"""
-        # 刮刮乐动画效果
+        # 咕咕嘎嘎动画效果
         scratch_animation =  "▓▓▓▓▓▓▓▓▓▓\n"
         scratch_animation += "▓░░░░░░░░░▓\n"
-        scratch_animation += "▓░░ 刮刮乐 ░░▓\n"
+        scratch_animation += "▓░░ 咕咕嘎嘎 ░░▓\n"
         scratch_animation += "▓░░░░░░░░░▓\n"
         scratch_animation += "▓▓▓▓▓▓▓▓▓▓\n\n"
         
         # 获取特殊效果文本
-        effect_text = random.choice(self.EFFECT_TEXTS.get(reward_amount, ["🎉 恭喜中奖"]))
+        if prize_type:
+            effect_text = random.choice(self.EFFECT_TEXTS.get(prize_type, ["🎉 恭喜中奖"]))
+        else:
+            effect_text = random.choice(self.EFFECT_TEXTS.get(reward_amount, ["🎉 恭喜中奖"]))
         
-        result_msg = f": {nickname} 🎫 刮刮乐结果 🎫\n\n"
+        result_msg = f": {nickname} 🎫 咕咕嘎嘎结果 🎫\n\n"
         result_msg += scratch_animation
         
-        if reward_amount == 0:
-            result_msg += f"💔 {description} - {effect_text}\n"
-            result_msg += f"💸 花费：{self.SCRATCH_COST}金币\n"
-            result_msg += f"💰 余额：{old_coins} → {new_coins}金币\n"
-        elif reward_amount == 800000:
-            # 特殊的大奖展示
+        if prize_type == "一等奖":
+            # 一等奖特殊展示
             result_msg += "🎆🎆🎆🎆🎆🎆🎆🎆🎆🎆\n"
-            result_msg += "🎉    史诗级大奖    🎉\n"
-            result_msg += "👑   80万金币大奖   👑\n" 
+            result_msg += "🎉    一等奖大奖    🎉\n"
+            result_msg += f"👑  {reward_amount:,}金币大奖  👑\n" 
             result_msg += "🎆🎆🎆🎆🎆🎆🎆🎆🎆🎆\n\n"
-            result_msg += f"🏆 恭喜 {nickname} 成为刮刮乐传奇！\n"
-            result_msg += f"💰 奖励：{reward_amount:,}金币\n"
+            result_msg += f"🏆 恭喜 {nickname} 成为咕咕嘎嘎传奇！\n"
+            result_msg += f"💰 咕咕嘎嘎池全归你：{reward_amount:,}金币\n"
             result_msg += f"💎 余额：{old_coins:,} → {new_coins:,}金币\n"
-            result_msg += f"\n🌟 {random.choice(self.EFFECT_TEXTS[800000])}"
-        elif reward_amount >= 100000:
-            # 高级大奖展示
+            result_msg += f"\n🌟 {effect_text}"
+        elif prize_type == "二等奖":
+            # 二等奖展示
             result_msg += "🎊🎊🎊🎊🎊🎊🎊🎊\n"
             result_msg += f"🌟  {description}  🌟\n"
             result_msg += "🎊🎊🎊🎊🎊🎊🎊🎊\n\n"
             result_msg += f"🎯 {effect_text}\n"
-            result_msg += f"💰 奖励：{reward_amount:,}金币\n"
+            result_msg += f"💰 咕咕嘎嘎池50%：{reward_amount:,}金币\n"
             result_msg += f"💎 余额：{old_coins:,} → {new_coins:,}金币"
-        elif reward_amount >= 10000:
-            # 中级大奖展示
+        elif prize_type == "三等奖":
+            # 三等奖展示
             result_msg += "✨✨✨✨✨✨\n"
             result_msg += f"🎉 {description} 🎉\n"
             result_msg += "✨✨✨✨✨✨\n\n"
             result_msg += f"🚀 {effect_text}\n"
-            result_msg += f"💰 奖励：{reward_amount:,}金币\n"
+            result_msg += f"💰 咕咕嘎嘎池20%：{reward_amount:,}金币\n"
             result_msg += f"💎 余额：{old_coins:,} → {new_coins:,}金币"
+        elif reward_amount == 0:
+            result_msg += f"💔 {description} - {effect_text}\n"
+            result_msg += f"💸 花费：{self.SCRATCH_COST}金币\n"
+            result_msg += f"💰 余额：{old_coins} → {new_coins}金币\n"
         else:
             # 普通奖励展示
             result_msg += f"🎁 {description} - {effect_text}\n"
@@ -321,11 +322,13 @@ class ScratchCardHandler:
             result_msg += f"💰 余额：{old_coins} → {new_coins}金币"
         
         # 添加鼓励文字
-        if reward_amount == 0:
-            result_msg += "\n🍀 别灰心，下次一定能中大奖！"
+        if prize_type:
+            result_msg += f"\n🌟 你的运气简直逆天了！\n⭐️咕咕嘎嘎池当前还有{get_prize_pool():,}金币"
+        elif reward_amount == 0:
+            result_msg += f"\n🍀 别灰心，下次一定能嘎嘎咕咕的！\n⭐️咕咕嘎嘎池已达{get_prize_pool():,}金币"
         elif reward_amount < self.SCRATCH_COST:
-            result_msg += "\n🎯 运气还不错，继续加油！"
-        elif reward_amount >= 100000:
-            result_msg += "\n🌟 你的运气简直逆天了！"
+            result_msg += f"\n🎯 运气还不错，继续加油！\n⭐️咕咕嘎嘎池已达{get_prize_pool():,}金币"
+        else:
+            result_msg += f"\n🎊 不错的收益！\n⭐️咕咕嘎嘎池已达{get_prize_pool():,}金币"
         
         return result_msg

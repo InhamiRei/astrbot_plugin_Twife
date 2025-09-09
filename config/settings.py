@@ -38,6 +38,7 @@ STUDY_STATUS_FILE = os.path.join(DATA_DIR, 'study_status.json')
 WORK_STATUS_FILE = os.path.join(DATA_DIR, 'work_status.json')
 DUNGEON_DATA_FILE = os.path.join(DATA_DIR, 'dungeon_data.json')
 NO_AT_USERS_FILE = os.path.join(DATA_DIR, 'no_at_users.json')
+PRIZE_POOL_FILE = os.path.join(DATA_DIR, 'prize_pool.json')
 
 # 网络配置
 IMAGE_BASE_URL = 'http://save.my996.top/?/img/'

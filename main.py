@@ -164,8 +164,9 @@ class WifePlugin(Star):
             "世界boss": self.world_boss_handler.world_boss_status,
             "攻击boss": self.world_boss_handler.attack_boss,
             
-            # 刮刮乐命令
-            "刮刮乐": self.scratch_card_handler.scratch_card,
+            # 咕咕嘎嘎命令（注意：长命令要放在短命令前面，避免匹配冲突）
+            "咕咕嘎嘎池": self.scratch_card_handler.prize_pool_query,
+            "咕咕嘎嘎": self.scratch_card_handler.scratch_card,
             }
 
             self.admins = self.load_admins()
@@ -268,7 +269,7 @@ class WifePlugin(Star):
 
             for command, func in self.commands.items():
                 # 精准匹配：消息必须完全等于命令，或者是带参数的命令
-                match_condition = message_str == command or (command in ["确认老婆", "牛老婆", "查老婆", "老婆详情", "赠送礼物", "出售物品", "购买物品", "出门学习", "出门打工", "购买家具", "出售家具", "家具中心-图片", "前往地下城", "一键出售战利品", "购买服装", "换衣", "脱下", "查询物品", "世界boss", "攻击boss", "刮刮乐"] and message_str.startswith(command))
+                match_condition = message_str == command or (command in ["确认老婆", "牛老婆", "查老婆", "老婆详情", "赠送礼物", "出售物品", "购买物品", "出门学习", "出门打工", "购买家具", "出售家具", "家具中心-图片", "前往地下城", "一键出售战利品", "购买服装", "换衣", "脱下", "查询物品", "世界boss", "攻击boss", "咕咕嘎嘎", "咕咕嘎嘎池"] and message_str.startswith(command))
 
                 if match_condition:
                     # 正式群
@@ -350,7 +351,8 @@ class WifePlugin(Star):
         menu += "36. 查询物品 物品名 - 查看物品详情和效果\n"
         menu += "37. 世界boss - 查看当前世界Boss状态和伤害排行榜\n"
         menu += "38. 攻击boss - 攻击世界Boss，造成伤害（消耗300健康值）\n"
-        menu += "39. 刮刮乐 - 花费50金币试试运气，最高可得80万大奖（概率极低）\n"
+        menu += "39. 咕咕嘎嘎 - 花费100金币试试运气，有机会获得咕咕嘎嘎池大奖（概率极低）\n"
+        menu += "40. 咕咕嘎嘎池 - 查看当前咕咕嘎嘎池状态和奖励说明\n"
         menu += "\n【系统特色】\n"
         menu += "🎮 完全重构的模块化架构\n"
         menu += "📊 老婆属性系统：等级、成长值、饥饿、清洁、健康、心情\n"
@@ -368,7 +370,7 @@ class WifePlugin(Star):
         menu += "🗡️ 地下城系统：冒险战斗、杀怪统计、结晶收集\n"
         menu += "👗 服装系统：五大精品套装、装备属性加成、套装效果\n"
         menu += "🐉 世界Boss系统：挑战黑化可可萝、获得珍贵料理道具、全服协作排行榜\n"
-        menu += "🎫 刮刮乐系统：运气游戏，小投入有机会获得巨额回报，80万大奖等你来拿\n"
+        menu += "🎫 咕咕嘎嘎系统：咕咕嘎嘎池模式运气游戏，每次100金币进入咕咕嘎嘎池，三等奖(20%)、二等奖(50%)、一等奖(100%)等你来拿\n"
 
         yield event.plain_result(menu)
 

@@ -177,10 +177,10 @@ class DungeonHandler:
                 for _ in range(int(monster['weight'] * 10)):  # 乘以10增加精度
                     weighted_monsters.append(monster)
 
-            # 计算战斗次数：降低基础战斗次数
-            base_battles = 12  # 降低基础战斗次数
-            # 每20战斗力增加1次额外战斗，最多增加8次
-            extra_battles = min(int(total_power / 20), 8)
+            # 计算战斗次数：基础50次，最多附加50次
+            base_battles = 50  # 基础战斗次数
+            # 每10战斗力增加1次额外战斗，最多增加50次
+            extra_battles = min(int(total_power / 10), 50)
             max_kills = base_battles + extra_battles
 
             for _ in range(max_kills):
