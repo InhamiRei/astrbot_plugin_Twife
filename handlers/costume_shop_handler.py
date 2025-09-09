@@ -91,16 +91,23 @@ class CostumeShopHandler:
             user_data_obj = get_user_data(user_id)
             current_coins = user_data_obj.get("coins", 0)
             wardrobe = user_data_obj.get("wardrobe", {})
+            equipment = user_data_obj.get("equipment", {})
             
             # 检查金币是否足够
             if current_coins < costume["price"]:
                 yield event.plain_result(f'金币不足！需要{costume["price"]:,}金币，你现在有{current_coins:,}金币。')
                 return
             
-            # 检查是否已经拥有该服装
+            # 检查是否已经拥有该服装（在衣柜中）
             if costume_name in wardrobe:
                 yield event.plain_result(f'你已经拥有"{costume_name}"了！')
                 return
+            
+            # 检查是否已经穿着该服装（在装备中）
+            for slot, equipped_item in equipment.items():
+                if equipped_item == costume_name:
+                    yield event.plain_result(f'你已经穿着"{costume_name}"了！')
+                    return
             
             # 扣除金币并添加服装到衣柜
             new_coins = current_coins - costume["price"]
