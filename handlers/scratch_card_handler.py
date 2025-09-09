@@ -11,7 +11,7 @@ class ScratchCardHandler:
         # 普通奖励配置：(奖励金额, 权重, 描述)
         self.SCRATCH_REWARDS = [
             # 常规奖励（高概率）
-            (0, 5000, "谢谢惠顾"),
+            (0, 2000, "谢谢惠顾"),
             (20, 1000, "小奖"),
             (50, 800, "小赚"),
             (100, 500, "回本"),
@@ -184,57 +184,33 @@ class ScratchCardHandler:
             yield event.plain_result('无法获取用户信息，请检查消息事件对象。')
             return
 
+        # 解析咕咕嘎嘎数量
+        quantity = self._parse_scratch_quantity(event.message_str)
+        
         # 获取用户数据
         user_data_obj = get_user_data(user_id)
         current_coins = user_data_obj["coins"]
         
+        # 计算总费用
+        total_cost = self.SCRATCH_COST * quantity
+        
         # 检查金币是否足够
-        if current_coins < self.SCRATCH_COST:
-            yield event.plain_result(f': {nickname}，咕咕嘎嘎需要{self.SCRATCH_COST}金币，你当前只有{current_coins}金币，金币不足！')
+        if current_coins < total_cost:
+            if quantity == 1:
+                yield event.plain_result(f': {nickname}，咕咕嘎嘎需要{self.SCRATCH_COST}金币，你当前只有{current_coins}金币，金币不足！')
+            else:
+                yield event.plain_result(f': {nickname}，{quantity}次咕咕嘎嘎需要{total_cost}金币，你当前只有{current_coins}金币，金币不足！')
             return
         
-        # 扣除费用并添加到咕咕嘎嘎池
-        new_coins = current_coins - self.SCRATCH_COST
-        add_to_prize_pool(self.SCRATCH_COST)
-        
-        # 随机抽取奖励
-        reward_result = self._get_random_reward()
-        
-        # 处理奖励
-        if isinstance(reward_result[0], str):
-            # 咕咕嘎嘎池奖励
-            prize_type = reward_result[0]
-            description = reward_result[1]
-            current_pool = get_prize_pool()
-            
-            if prize_type == "三等奖":
-                reward_amount = int(current_pool * 0.2)
-                # 清空咕咕嘎嘎池的20%
-                reduce_prize_pool(reward_amount)
-            elif prize_type == "二等奖":
-                reward_amount = int(current_pool * 0.5)
-                # 清空咕咕嘎嘎池的50%
-                reduce_prize_pool(reward_amount)
-            elif prize_type == "一等奖":
-                reward_amount = current_pool
-                # 清空整个咕咕嘎嘎池
-                clear_prize_pool()
+        # 执行批量咕咕嘎嘎
+        if quantity == 1:
+            # 单次咕咕嘎嘎（保持原有逻辑）
+            result_msg = await self._single_scratch(user_id, nickname, current_coins)
+            yield event.plain_result(result_msg)
         else:
-            # 普通奖励
-            reward_amount = reward_result[0]
-            description = reward_result[1]
-            prize_type = None
-        
-        # 加上奖励
-        final_coins = new_coins + reward_amount
-        
-        # 更新用户金币
-        update_user_data(user_id, coins=final_coins)
-        
-        # 构建结果消息
-        result_msg = self._build_result_message(nickname, reward_amount, description, current_coins, final_coins, prize_type)
-        
-        yield event.plain_result(result_msg)
+            # 批量咕咕嘎嘎
+            result_msg = await self._batch_scratch(user_id, nickname, current_coins, quantity)
+            yield event.plain_result(result_msg)
     
     async def prize_pool_query(self, event: AstrMessageEvent):
         """咕咕嘎嘎咕咕嘎嘎池查询功能"""
@@ -246,24 +222,250 @@ class ScratchCardHandler:
         pool_msg += f"🥇 一等奖: {current_pool:,}金币 (咕咕嘎嘎池100%)\n"
         pool_msg += f"🥈 二等奖: {int(current_pool * 0.5):,}金币 (咕咕嘎嘎池50%)\n"
         pool_msg += f"🥉 三等奖: {int(current_pool * 0.2):,}金币 (咕咕嘎嘎池20%)\n\n"
-        pool_msg += "💡 每次咕咕嘎嘎花费100金币，全部进入咕咕嘎嘎池\n"
+        pool_msg += "💡 经济系统说明:\n"
+        pool_msg += "• 每次咕咕嘎嘎花费100金币，全部进入咕咕嘎嘎池\n"
+        pool_msg += "• 所有奖励都从咕咕嘎嘎池扣除，维持经济平衡\n"
+        pool_msg += "• 奖池不足时，相应奖励将不可用\n"
+        pool_msg += "• 奖池越大，可获得的奖励种类越多\n\n"
         pool_msg += "🍀 中奖概率极低，运气决定一切！"
         
         yield event.plain_result(pool_msg)
 
-    def _get_random_reward(self):
-        """根据权重随机获取奖励"""
-        # 构建权重列表
+    def _parse_scratch_quantity(self, message_str):
+        """解析咕咕嘎嘎数量"""
+        try:
+            # 移除命令前缀，获取参数部分
+            if " " in message_str:
+                parts = message_str.strip().split()
+                if len(parts) >= 2 and parts[0] == "咕咕嘎嘎":
+                    quantity = int(parts[1])
+                    # 限制数量范围
+                    if quantity <= 0:
+                        return 1
+                    elif quantity > 100:  # 最多一次100次
+                        return 100
+                    else:
+                        return quantity
+        except (ValueError, IndexError):
+            pass
+        return 1  # 默认1次
+
+    async def _single_scratch(self, user_id, nickname, current_coins):
+        """单次咕咕嘎嘎"""
+        # 扣除费用并添加到咕咕嘎嘎池
+        new_coins = current_coins - self.SCRATCH_COST
+        add_to_prize_pool(self.SCRATCH_COST)
+        
+        # 获取当前奖池状态并随机抽取奖励
+        current_pool = get_prize_pool()
+        reward_result = self._get_random_reward(current_pool)
+        
+        # 处理奖励
+        if isinstance(reward_result[0], str):
+            # 咕咕嘎嘎池奖励
+            prize_type = reward_result[0]
+            description = reward_result[1]
+            
+            if prize_type == "三等奖":
+                reward_amount = int(current_pool * 0.2)
+                reduce_prize_pool(reward_amount)
+            elif prize_type == "二等奖":
+                reward_amount = int(current_pool * 0.5)
+                reduce_prize_pool(reward_amount)
+            elif prize_type == "一等奖":
+                reward_amount = current_pool
+                clear_prize_pool()
+        else:
+            # 普通奖励
+            reward_amount = reward_result[0]
+            description = reward_result[1]
+            prize_type = None
+            
+            # 从奖池扣除普通奖励金额
+            if reward_amount > 0:
+                reduce_prize_pool(reward_amount)
+        
+        # 加上奖励
+        final_coins = new_coins + reward_amount
+        
+        # 更新用户金币
+        update_user_data(user_id, coins=final_coins)
+        
+        # 构建结果消息
+        result_msg = self._build_result_message(nickname, reward_amount, description, current_coins, final_coins, prize_type)
+        return result_msg
+
+    async def _batch_scratch(self, user_id, nickname, current_coins, quantity):
+        """批量咕咕嘎嘎"""
+        # 统计数据
+        total_cost = self.SCRATCH_COST * quantity
+        total_reward = 0
+        prize_counts = {"一等奖": 0, "二等奖": 0, "三等奖": 0}
+        reward_counts = {}
+        all_rewards = []
+        
+        # 扣除总费用并添加到咕咕嘎嘎池
+        current_coins_working = current_coins - total_cost
+        add_to_prize_pool(total_cost)
+        
+        # 执行多次咕咕嘎嘎
+        for i in range(quantity):
+            current_pool = get_prize_pool()
+            reward_result = self._get_random_reward(current_pool)
+            
+            # 处理奖励
+            if isinstance(reward_result[0], str):
+                # 咕咕嘎嘎池奖励
+                prize_type = reward_result[0]
+                description = reward_result[1]
+                prize_counts[prize_type] += 1
+                
+                if prize_type == "三等奖":
+                    reward_amount = int(current_pool * 0.2)
+                    reduce_prize_pool(reward_amount)
+                elif prize_type == "二等奖":
+                    reward_amount = int(current_pool * 0.5)
+                    reduce_prize_pool(reward_amount)
+                elif prize_type == "一等奖":
+                    reward_amount = current_pool
+                    clear_prize_pool()
+            else:
+                # 普通奖励
+                reward_amount = reward_result[0]
+                description = reward_result[1]
+                
+                # 统计普通奖励
+                if reward_amount in reward_counts:
+                    reward_counts[reward_amount] += 1
+                else:
+                    reward_counts[reward_amount] = 1
+                
+                # 从奖池扣除普通奖励金额
+                if reward_amount > 0:
+                    reduce_prize_pool(reward_amount)
+            
+            total_reward += reward_amount
+            all_rewards.append((reward_amount, description, prize_type if isinstance(reward_result[0], str) else None))
+        
+        # 更新用户金币
+        final_coins = current_coins_working + total_reward
+        update_user_data(user_id, coins=final_coins)
+        
+        # 构建批量结果消息
+        result_msg = self._build_batch_result_message(nickname, quantity, total_cost, total_reward, 
+                                                      current_coins, final_coins, prize_counts, 
+                                                      reward_counts, all_rewards)
+        return result_msg
+
+    def _get_random_reward(self, current_pool):
+        """根据权重随机获取奖励，只提供奖池能支付的奖励"""
+        # 构建权重列表，只包含奖池能支付的奖励
         rewards = []
         weights = []
         
         for amount, weight, desc in self.SCRATCH_REWARDS:
-            rewards.append((amount, desc))
-            weights.append(weight)
+            # 检查奖池是否能支付该奖励
+            can_afford = False
+            
+            if isinstance(amount, str):
+                # 特殊奖励（三等奖、二等奖、一等奖）
+                if amount == "三等奖" and current_pool >= 100:  # 至少需要100金币才有意义
+                    can_afford = True
+                elif amount == "二等奖" and current_pool >= 200:  # 至少需要200金币才有意义
+                    can_afford = True
+                elif amount == "一等奖" and current_pool >= 500:  # 至少需要500金币才有意义
+                    can_afford = True
+            else:
+                # 普通奖励
+                if amount <= current_pool:
+                    can_afford = True
+            
+            if can_afford:
+                rewards.append((amount, desc))
+                weights.append(weight)
+        
+        # 如果没有可用奖励（奖池太少），提供保底奖励
+        if not rewards:
+            rewards = [(0, "谢谢惠顾")]
+            weights = [1]
         
         # 加权随机选择
         chosen_reward = random.choices(rewards, weights=weights)[0]
         return chosen_reward
+
+    def _build_batch_result_message(self, nickname, quantity, total_cost, total_reward, 
+                                    old_coins, new_coins, prize_counts, reward_counts, all_rewards):
+        """构建批量咕咕嘎嘎结果消息"""
+        # 批量咕咕嘎嘎动画效果
+        batch_animation =  "▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓\n"
+        batch_animation += "▓░░░ 批量咕咕嘎嘎 ░░░▓\n"
+        batch_animation += f"▓░░░   {quantity}次连击   ░░░▓\n"
+        batch_animation += "▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓\n\n"
+        
+        result_msg = f": {nickname} 🎫 批量咕咕嘎嘎结果 🎫\n\n"
+        result_msg += batch_animation
+        
+        # 总体统计
+        net_change = total_reward - total_cost
+        if net_change > 0:
+            result_msg += f"🎉 大获全胜！净赚 {net_change:,} 金币！\n\n"
+        elif net_change == 0:
+            result_msg += f"⚖️ 不亏不赚，完美平衡！\n\n"
+        else:
+            result_msg += f"💸 净亏损 {abs(net_change):,} 金币...\n\n"
+        
+        # 咕咕嘎嘎池大奖统计
+        if any(prize_counts.values()):
+            result_msg += "🏆 咕咕嘎嘎池大奖统计：\n"
+            if prize_counts["一等奖"] > 0:
+                result_msg += f"👑 一等奖：{prize_counts['一等奖']}次 - 运气爆棚！\n"
+            if prize_counts["二等奖"] > 0:
+                result_msg += f"🥈 二等奖：{prize_counts['二等奖']}次 - 相当不错！\n"
+            if prize_counts["三等奖"] > 0:
+                result_msg += f"🥉 三等奖：{prize_counts['三等奖']}次 - 小有收获！\n"
+            result_msg += "\n"
+        
+        # 常规奖励统计（仅显示有意义的）
+        meaningful_rewards = {k: v for k, v in reward_counts.items() if k > 0}
+        if meaningful_rewards:
+            result_msg += "💰 常规奖励统计：\n"
+            for reward, count in sorted(meaningful_rewards.items(), key=lambda x: x[0], reverse=True):
+                if reward >= 1000:
+                    result_msg += f"🌟 {reward:,}金币 × {count}次\n"
+                elif reward >= 500:
+                    result_msg += f"🎉 {reward:,}金币 × {count}次\n"
+                elif reward >= 200:
+                    result_msg += f"💎 {reward:,}金币 × {count}次\n"
+                elif reward >= 100:
+                    result_msg += f"✨ {reward:,}金币 × {count}次\n"
+                else:
+                    result_msg += f"🎁 {reward:,}金币 × {count}次\n"
+            result_msg += "\n"
+        
+        # 谢谢惠顾统计
+        if 0 in reward_counts:
+            result_msg += f"💔 谢谢惠顾：{reward_counts[0]}次\n\n"
+        
+        # 财务报告
+        result_msg += "📊 财务报告：\n"
+        result_msg += f"💸 总花费：{total_cost:,}金币\n"
+        result_msg += f"💰 总收入：{total_reward:,}金币\n"
+        result_msg += f"📈 净收益：{net_change:+,}金币\n"
+        result_msg += f"💎 余额变化：{old_coins:,} → {new_coins:,}金币\n\n"
+        
+        # 根据结果给出评价
+        if any(prize_counts.values()):
+            result_msg += "🌟 恭喜获得咕咕嘎嘎池大奖！你的运气简直逆天！\n"
+        elif net_change > 0:
+            result_msg += "🎊 批量咕咕嘎嘎大成功！运气不错哦！\n"
+        elif net_change == 0:
+            result_msg += "🤝 运气刚好，不赚不亏！\n"
+        else:
+            result_msg += "🍀 这次运气不太好，下次一定能翻本！\n"
+        
+        result_msg += f"⭐️ 咕咕嘎嘎池当前还有 {get_prize_pool():,} 金币"
+        
+        return result_msg
 
     def _build_result_message(self, nickname, reward_amount, description, old_coins, new_coins, prize_type=None):
         """构建结果消息"""
