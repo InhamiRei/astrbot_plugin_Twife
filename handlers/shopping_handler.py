@@ -90,8 +90,15 @@ class ShoppingHandler:
             yield event.plain_result(f': {nickname}，你目前没有任何战利品可以出售。')
             return
         
+        # 获取房产售出加成
+        property_name = user_data_obj["property"]
+        from ..config.properties import get_property_sell_bonus
+        sell_bonus = get_property_sell_bonus(property_name)
+        
         # 计算战利品总价值
-        total_value = 0
+        base_total_value = 0
+        total_bonus = 0
+        final_total_value = 0
         trophy_details = []
         
         # 世界Boss奖励物品价格配置
@@ -130,22 +137,36 @@ class ShoppingHandler:
                             break
             
             if item_price > 0:
-                item_total = item_price * count
-                total_value += item_total
-                trophy_details.append(f"{item_name} x{count} = {item_total}金币")
+                # 计算基础价值
+                base_item_total = item_price * count
+                # 计算房产加成
+                bonus_amount = int(base_item_total * sell_bonus / 100)
+                # 计算最终价值
+                final_item_total = base_item_total + bonus_amount
+                
+                base_total_value += base_item_total
+                total_bonus += bonus_amount
+                final_total_value += final_item_total
+                
+                if sell_bonus > 0:
+                    trophy_details.append(f"{item_name} x{count} = {base_item_total}(+{bonus_amount})金币")
+                else:
+                    trophy_details.append(f"{item_name} x{count} = {final_item_total}金币")
         
-        if total_value == 0:
+        if final_total_value == 0:
             yield event.plain_result(f': {nickname}，你的战利品都没有价值，无法出售。')
             return
         
         # 更新用户数据：增加金币，清空战利品
-        user_data_obj["coins"] += total_value
+        user_data_obj["coins"] += final_total_value
         user_data_obj["trophies"] = {}
         update_user_data(user_id, coins=user_data_obj["coins"], trophies=user_data_obj["trophies"])
         
         # 构建结果消息
         result_msg = f": {nickname}，一键出售战利品完成\n"
-        result_msg += f"💰 总收入：{total_value}金币"
+        result_msg += f"💰 基础总价：{base_total_value}金币\n"
+        result_msg += f"🏠 房产加成：+{sell_bonus}% (+{total_bonus}金币)\n"
+        result_msg += f"💰 实际收入：{final_total_value}金币"
         result_msg += f"\n💎 当前金币：{user_data_obj['coins']}"
         result_msg += "\n🏆 战利品列表："
         result_msg += "，".join(trophy_details)
