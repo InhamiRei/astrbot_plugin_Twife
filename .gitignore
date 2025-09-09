@@ -5,3 +5,11 @@ no_at_users.json
 study_status.json
 user_data.json
 work_status.json
+world_boss_damage_records.json
+world_boss_data.json
+__pycache__/
+*/__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd

@@ -94,24 +94,40 @@ class ShoppingHandler:
         total_value = 0
         trophy_details = []
         
+        # 世界Boss奖励物品价格配置
+        world_boss_items_price = {
+            "可可萝的围裙": 1500,
+            "温暖的料理": 2500,
+            "美食食谱": 3000,
+            "可可萝的笑容": 4000,
+            "公主之心": 10000,
+            "可可萝的发夹": 4500,
+            "厨师的骄傲": 5000
+        }
+        
         # 从地下城配置中获取物品价格
         from ..config.dungeon_config import DUNGEON_LIST
         
         for item_name, count in trophies.items():
             item_price = 0
-            # 在所有地下城的掉落列表中查找该物品的价格
-            for dungeon in DUNGEON_LIST:
-                if 'monsters' in dungeon:
-                    for monster in dungeon['monsters']:
-                        if 'drops' in monster:
-                            for drop in monster['drops']:
-                                if drop['item'] == item_name:
-                                    item_price = drop['price']
+            
+            # 首先检查是否为世界Boss奖励物品
+            if item_name in world_boss_items_price:
+                item_price = world_boss_items_price[item_name]
+            else:
+                # 在所有地下城的掉落列表中查找该物品的价格
+                for dungeon in DUNGEON_LIST:
+                    if 'monsters' in dungeon:
+                        for monster in dungeon['monsters']:
+                            if 'drops' in monster:
+                                for drop in monster['drops']:
+                                    if drop['item'] == item_name:
+                                        item_price = drop['price']
+                                        break
+                                if item_price > 0:
                                     break
-                            if item_price > 0:
-                                break
-                    if item_price > 0:
-                        break
+                        if item_price > 0:
+                            break
             
             if item_price > 0:
                 item_total = item_price * count

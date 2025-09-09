@@ -40,6 +40,7 @@ from .handlers.dungeon_handler import DungeonHandler
 from .handlers.costume_shop_handler import CostumeShopHandler
 from .handlers.dress_up_handler import DressUpHandler
 from .handlers.item_query_handler import ItemQueryHandler
+from .handlers.world_boss_handler import WorldBossHandler
 
 @register(
     "astrbot_plugin_aw",
@@ -78,9 +79,14 @@ class WifePlugin(Star):
             self.costume_shop_handler = CostumeShopHandler()
             self.dress_up_handler = DressUpHandler()
             self.item_query_handler = ItemQueryHandler()
+            self.world_boss_handler = WorldBossHandler()
 
             # 初始化所有数据
             initialize_all_data()
+            
+            # 初始化世界Boss数据
+            from .core.world_boss_system import initialize_world_boss_data
+            initialize_world_boss_data()
             
             # 设置全局插件实例引用，让其他模块可以访问调度器
             from .core import data_manager
@@ -151,6 +157,10 @@ class WifePlugin(Star):
             "换衣": self.dress_up_handler.dress_up,
             "脱下": self.dress_up_handler.undress,
             "查询物品": self.item_query_handler.query_item,
+            
+            # 世界Boss命令
+            "世界boss": self.world_boss_handler.world_boss_status,
+            "攻击boss": self.world_boss_handler.attack_boss,
             }
 
             self.admins = self.load_admins()
@@ -253,7 +263,7 @@ class WifePlugin(Star):
 
             for command, func in self.commands.items():
                 # 精准匹配：消息必须完全等于命令，或者是带参数的命令
-                match_condition = message_str == command or (command in ["确认老婆", "牛老婆", "查老婆", "老婆详情", "赠送礼物", "出售物品", "购买物品", "出门学习", "出门打工", "购买家具", "出售家具", "家具中心-图片", "前往地下城", "一键出售战利品", "购买服装", "换衣", "脱下", "查询物品"] and message_str.startswith(command))
+                match_condition = message_str == command or (command in ["确认老婆", "牛老婆", "查老婆", "老婆详情", "赠送礼物", "出售物品", "购买物品", "出门学习", "出门打工", "购买家具", "出售家具", "家具中心-图片", "前往地下城", "一键出售战利品", "购买服装", "换衣", "脱下", "查询物品", "世界boss", "攻击boss"] and message_str.startswith(command))
 
                 if match_condition:
                     # 正式群
@@ -333,6 +343,8 @@ class WifePlugin(Star):
         menu += "34. 换衣 服装名 - 为老婆穿上指定服装\n"
         menu += "35. 脱下 服装名/部位 - 脱下指定服装或部位的装备\n"
         menu += "36. 查询物品 物品名 - 查看物品详情和效果\n"
+        menu += "37. 世界boss - 查看当前世界Boss状态和伤害排行榜\n"
+        menu += "38. 攻击boss - 攻击世界Boss，造成伤害（消耗300健康值）\n"
         menu += "\n【系统特色】\n"
         menu += "🎮 完全重构的模块化架构\n"
         menu += "📊 老婆属性系统：等级、成长值、饥饿、清洁、健康、心情\n"
@@ -349,6 +361,7 @@ class WifePlugin(Star):
         menu += "⚔️ NTR系统：牛头人盛宴、无敌状态\n"
         menu += "🗡️ 地下城系统：冒险战斗、杀怪统计、结晶收集\n"
         menu += "👗 服装系统：五大精品套装、装备属性加成、套装效果\n"
+        menu += "🐉 世界Boss系统：挑战黑化可可萝、获得珍贵料理道具、全服协作排行榜\n"
 
         yield event.plain_result(menu)
 

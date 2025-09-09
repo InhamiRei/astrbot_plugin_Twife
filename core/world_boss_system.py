@@ -1,0 +1,462 @@
+"""世界boss系统核心模块"""
+import random
+import math
+import json
+import os
+import re
+from datetime import datetime, timedelta
+from typing import Dict, List, Tuple, Optional
+from .data_manager import *
+
+# 世界Boss配置
+WORLD_BOSS_CONFIG = {
+    "可可萝（黑化）": {
+        "name": "可可萝（黑化）",
+        "description": "被黑暗力量侵蚀的公主，散发着危险的气息",
+        "phases": [
+            {"phase": 1, "max_hp": 1000, "name": "小小引导者"},
+            {"phase": 2, "max_hp": 50000, "name": "极光绽放"},
+            {"phase": 3, "max_hp": 100000, "name": "精灵的启示"}
+        ],
+        "rewards": {
+            1: {"coins": [10000, 20000], "items": ["可可萝的围裙", "温暖的料理", "美食食谱"]},
+            2: {"coins": [50000, 100000], "items": ["可可萝的围裙", "温暖的料理", "美食食谱", "可可萝的笑容", "公主之心"]},
+            3: {"coins": [100000, 150000], "items": ["可可萝的围裙", "温暖的料理", "美食食谱", "可可萝的笑容", "公主之心", "可可萝的发夹", "厨师的骄傲"]}
+        }
+    }
+}
+
+# 全局Boss状态数据
+world_boss_data = {}
+world_boss_damage_records = {}  # 记录每个用户对boss造成的伤害
+
+def clean_nickname(nickname: str) -> str:
+    """清理昵称，去除图片文件后缀"""
+    if not nickname:
+        return nickname
+    
+    # 常见的图片文件扩展名
+    image_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg', '.ico']
+    
+    # 使用正则表达式匹配并去除图片后缀（不区分大小写）
+    pattern = r'(' + '|'.join(re.escape(ext) for ext in image_extensions) + r')$'
+    cleaned_nickname = re.sub(pattern, '', nickname, flags=re.IGNORECASE)
+    
+    return cleaned_nickname.strip()
+
+def load_world_boss_data():
+    """加载世界Boss数据"""
+    global world_boss_data, world_boss_damage_records
+
+    # 使用正确的数据目录路径
+    from ..config.settings import DATA_DIR
+    boss_data_file = os.path.join(DATA_DIR, 'world_boss_data.json')
+    damage_records_file = os.path.join(DATA_DIR, 'world_boss_damage_records.json')
+    
+    # 加载Boss状态数据
+    if not os.path.exists(boss_data_file):
+        # 初始化第一个Boss
+        world_boss_data = initialize_new_boss("可可萝（黑化）")
+        save_world_boss_data()
+    else:
+        with open(boss_data_file, 'r', encoding='utf-8') as f:
+            world_boss_data = json.load(f)
+        
+        # 数据兼容性检查 - 确保包含所有必需字段
+        required_fields = ["name", "description", "current_phase", "current_hp", "max_hp", "phase_name", "is_defeated"]
+        if not world_boss_data or not all(field in world_boss_data for field in required_fields):
+            print("[世界Boss] 检测到数据格式不兼容，重新初始化Boss数据...")
+            world_boss_data = initialize_new_boss("可可萝（黑化）")
+            save_world_boss_data()
+    
+    # 加载伤害记录
+    if not os.path.exists(damage_records_file):
+        world_boss_damage_records = {}
+        save_world_boss_damage_records()
+    else:
+        with open(damage_records_file, 'r', encoding='utf-8') as f:
+            world_boss_damage_records = json.load(f)
+
+def save_world_boss_data():
+    """保存世界Boss数据"""
+    from ..config.settings import DATA_DIR
+    boss_data_file = os.path.join(DATA_DIR, 'world_boss_data.json')
+    with open(boss_data_file, 'w', encoding='utf-8') as f:
+        json.dump(world_boss_data, f, ensure_ascii=False, indent=4)
+
+def save_world_boss_damage_records():
+    """保存伤害记录"""
+    from ..config.settings import DATA_DIR
+    damage_records_file = os.path.join(DATA_DIR, 'world_boss_damage_records.json')
+    with open(damage_records_file, 'w', encoding='utf-8') as f:
+        json.dump(world_boss_damage_records, f, ensure_ascii=False, indent=4)
+
+def initialize_new_boss(boss_name: str) -> dict:
+    """初始化新的世界Boss"""
+    if boss_name not in WORLD_BOSS_CONFIG:
+        return {}
+    
+    config = WORLD_BOSS_CONFIG[boss_name]
+    return {
+        "name": boss_name,
+        "description": config["description"],
+        "current_phase": 1,
+        "current_hp": config["phases"][0]["max_hp"],
+        "max_hp": config["phases"][0]["max_hp"],
+        "phase_name": config["phases"][0]["name"],
+        "is_defeated": False,
+        "created_at": datetime.now().isoformat(),
+        "last_attack_time": None
+    }
+
+def calculate_damage(user_id: str) -> Tuple[int, str]:
+    """计算用户对Boss造成的伤害
+    
+    Returns:
+        Tuple[int, str]: (伤害值, 详细计算信息)
+    """
+    # 获取老婆数据
+    wife_data = get_user_wife_data(user_id)
+    if not wife_data:
+        return 0, "你还没有老婆，无法参与战斗！"
+    
+    user_data_obj = get_user_data(user_id)
+    
+    # 基础属性
+    level = wife_data[5]  # 等级
+    affection = wife_data[4]  # 好感度
+    moe_value = wife_data[14]  # 妹抖值
+    spoil_value = wife_data[15]  # 撒娇值  
+    tsundere_value = wife_data[16]  # 傲娇值
+    dark_rate = wife_data[17]  # 黑化率
+    contrast_cute = wife_data[18]  # 反差萌
+    
+    # 基础伤害计算
+    # 等级影响 (1-100级，基础倍数0.5-5.0)
+    level_multiplier = min(0.5 + (level * 0.045), 5.0)
+    
+    # 好感度影响 (0-10000，基础倍数0.1-2.0)
+    affection_multiplier = min(0.1 + (affection * 0.00019), 2.0)
+    
+    # 特殊属性影响
+    special_multiplier = 1.0
+    special_multiplier += moe_value * 0.02  # 妹抖值每点+2%
+    special_multiplier += spoil_value * 0.015  # 撒娇值每点+1.5%
+    special_multiplier += tsundere_value * 0.025  # 傲娇值每点+2.5%
+    special_multiplier += dark_rate * 0.03  # 黑化率每点+3%
+    special_multiplier += contrast_cute * 0.02  # 反差萌每点+2%
+    
+    # 时装加成计算
+    equipment_bonus = 0
+    equipment_info = []
+    equipment = user_data_obj.get("equipment", {})
+    
+    # 从items_config获取装备属性加成
+    from ..config.items_config import ITEMS_LIST
+    items_dict = {item['name']: item for item in ITEMS_LIST}
+    
+    for slot, item_name in equipment.items():
+        if item_name and item_name in items_dict:
+            item_data = items_dict[item_name]
+            if 'stats' in item_data:
+                # 计算装备的总属性加成作为攻击力
+                item_bonus = 0
+                for stat, value in item_data['stats'].items():
+                    item_bonus += value
+                equipment_bonus += item_bonus
+                equipment_info.append(f"{item_name}(+{item_bonus})")
+    
+    # 随机波动 (80%-120%)
+    random_multiplier = random.uniform(0.8, 1.2)
+    
+    # 最终伤害计算
+    base_damage = 100  # 基础伤害
+    final_damage = int(base_damage * level_multiplier * affection_multiplier * special_multiplier * random_multiplier) + equipment_bonus
+    
+    # 确保最小伤害
+    final_damage = max(final_damage, 10)
+    
+    # 构建详细信息
+    detail_info = f"等级x{level_multiplier:.2f} + 好感x{affection_multiplier:.2f} + 特殊属性x{special_multiplier:.2f} + 随机x{random_multiplier:.2f}"
+    if equipment_bonus > 0:
+        detail_info += f" + 装备(+{equipment_bonus})"
+        detail_info += f"[{','.join(equipment_info)}]"
+    
+    return final_damage, detail_info
+
+def attack_world_boss(user_id: str, nickname: str, group_id: str) -> dict:
+    """攻击世界Boss
+    
+    Returns:
+        dict: 攻击结果，包含伤害、Boss状态变化等信息
+    """
+    global world_boss_data, world_boss_damage_records
+    
+    # 检查Boss是否存在并且数据完整
+    if not world_boss_data or world_boss_data.get("is_defeated", True):
+        return {"success": False, "message": "当前没有可攻击的世界Boss！"}
+    
+    # 额外安全检查 - 确保必需字段存在
+    required_fields = ["current_phase", "current_hp", "max_hp", "name"]
+    if not all(field in world_boss_data for field in required_fields):
+        print("[世界Boss] 数据字段不完整，尝试重新初始化...")
+        # 重新加载数据
+        load_world_boss_data()
+        if not world_boss_data or not all(field in world_boss_data for field in required_fields):
+            return {"success": False, "message": "世界Boss数据异常，请联系管理员！"}
+    
+    # 检查老婆是否存在
+    wife_data = get_user_wife_data(user_id)
+    if not wife_data:
+        return {"success": False, "message": "你还没有老婆，无法参与战斗！"}
+    
+    # 检查健康值是否足够
+    current_health = wife_data[9]  # 健康值在索引9
+    if current_health < 30:
+        return {"success": False, "message": f"老婆健康值不足(当前{current_health})，需要至少30点健康值才能参战！"}
+    
+    # 计算伤害
+    damage, damage_detail = calculate_damage(user_id)
+    
+    # 检查阶段伤害阈值
+    current_phase = world_boss_data["current_phase"]
+    
+    # 2阶段需要至少1000伤害才能破防
+    if current_phase == 2 and damage < 1000:
+        return {
+            "success": False,
+            "message": f"你的攻击只造成了{damage}点伤害！\n可可萝的【极光护盾】闪闪发光，完全挡住了你的攻击！\n( ´∀｀)σ \n"
+        }
+    
+    # 3阶段需要至少3000伤害才能破防  
+    if current_phase == 3 and damage < 3000:
+        return {
+            "success": False,
+            "message": f"你的攻击只造成了{damage}点伤害！\n【精灵启示】的神圣光芒包围着可可萝，你的攻击被完全无效化了！\n(｡◕∀◕｡) ~\n"
+        }
+    
+    # 攻击成功，扣除健康值
+    update_user_wife_data(user_id, health=current_health - 30)
+    
+    # 记录伤害
+    clean_nick = clean_nickname(nickname)  # 清理昵称
+    if user_id not in world_boss_damage_records:
+        world_boss_damage_records[user_id] = {
+            "total_damage": 0,
+            "attack_count": 0,
+            "nickname": clean_nick,
+            "wife_name": wife_data[0],
+            "group_id": group_id
+        }
+    
+    world_boss_damage_records[user_id]["total_damage"] += damage
+    world_boss_damage_records[user_id]["attack_count"] += 1
+    world_boss_damage_records[user_id]["nickname"] = clean_nick  # 更新昵称
+    
+    # 对Boss造成伤害
+    world_boss_data["current_hp"] -= damage
+    world_boss_data["last_attack_time"] = datetime.now().isoformat()
+    
+    result = {
+        "success": True,
+        "damage": damage,
+        "damage_detail": damage_detail,
+        "boss_current_hp": world_boss_data["current_hp"],
+        "boss_max_hp": world_boss_data["max_hp"],
+        "phase_defeated": False,
+        "boss_defeated": False,
+        "phase_rewards": None,
+        "final_rewards": None
+    }
+    
+    # 检查是否击败当前阶段
+    if world_boss_data["current_hp"] <= 0:
+        current_phase = world_boss_data["current_phase"]
+        boss_name = world_boss_data["name"]
+        
+        # 发放阶段奖励
+        phase_rewards = distribute_phase_rewards(current_phase, boss_name)
+        result["phase_rewards"] = phase_rewards
+        result["phase_defeated"] = True
+        result["defeated_phase"] = current_phase
+        
+        # 检查是否还有下一阶段
+        boss_config = WORLD_BOSS_CONFIG[boss_name]
+        if current_phase < len(boss_config["phases"]):
+            # 进入下一阶段
+            next_phase = current_phase + 1
+            next_phase_config = boss_config["phases"][next_phase - 1]
+            
+            world_boss_data["current_phase"] = next_phase
+            world_boss_data["current_hp"] = next_phase_config["max_hp"]
+            world_boss_data["max_hp"] = next_phase_config["max_hp"]
+            world_boss_data["phase_name"] = next_phase_config["name"]
+            
+            result["next_phase"] = next_phase
+            result["next_phase_name"] = next_phase_config["name"]
+            result["next_phase_hp"] = next_phase_config["max_hp"]
+        else:
+            # Boss完全被击败
+            world_boss_data["is_defeated"] = True
+            final_rewards = generate_final_ranking()
+            result["boss_defeated"] = True
+            result["final_rewards"] = final_rewards
+    
+    # 保存数据
+    save_world_boss_data()
+    save_world_boss_damage_records()
+    
+    return result
+
+def distribute_phase_rewards(phase: int, boss_name: str) -> dict:
+    """分发阶段奖励"""
+    if boss_name not in WORLD_BOSS_CONFIG:
+        return {}
+    
+    rewards_config = WORLD_BOSS_CONFIG[boss_name]["rewards"][phase]
+    rewards_distributed = {}
+    
+    print(f"[世界Boss] 开始发放第{phase}阶段奖励给{len(world_boss_damage_records)}名参与者")
+    
+    for user_id, damage_data in world_boss_damage_records.items():
+        if damage_data["total_damage"] > 0:
+            # 计算金币奖励
+            coin_min, coin_max = rewards_config["coins"]
+            coins_reward = random.randint(coin_min, coin_max)
+            
+            # 随机选择1-3个物品奖励
+            items_reward = random.sample(rewards_config["items"], min(random.randint(1, 3), len(rewards_config["items"])))
+            
+            print(f"[世界Boss] 给用户{user_id}({damage_data['nickname']})发放奖励: {coins_reward}金币, {items_reward}")
+            
+            # 发放奖励 - 获取用户数据
+            user_data_obj = get_user_data(user_id)
+            old_coins = user_data_obj["coins"]
+            
+            # 发放金币
+            user_data_obj["coins"] += coins_reward
+            
+            # 发放物品到战利品（不是背包！）
+            for item in items_reward:
+                if item not in user_data_obj["trophies"]:
+                    user_data_obj["trophies"][item] = 0
+                user_data_obj["trophies"][item] += 1
+                print(f"[世界Boss] 添加物品 {item} 到用户 {user_id} 战利品, 当前数量: {user_data_obj['trophies'][item]}")
+            
+            # 立即保存用户数据
+            save_user_data()
+            
+            # 验证数据是否保存成功
+            verify_data = get_user_data(user_id)
+            print(f"[世界Boss] 验证保存结果 - 用户{user_id}:")
+            print(f"  金币: {old_coins} -> {verify_data['coins']} (应该是{old_coins + coins_reward})")
+            for item in items_reward:
+                print(f"  战利品 {item}: {verify_data['trophies'].get(item, 0)} (应该>=1)")
+            
+            print(f"[世界Boss] 用户{user_id}战利品当前状态: {dict(list(verify_data['trophies'].items())[-5:])}")
+            
+            rewards_distributed[user_id] = {
+                "nickname": clean_nickname(damage_data["nickname"]),  # 确保昵称干净
+                "coins": coins_reward,
+                "items": items_reward,
+                "total_damage": damage_data["total_damage"]
+            }
+    
+    print(f"[世界Boss] 第{phase}阶段奖励发放完成，共{len(rewards_distributed)}名勇士获得奖励")
+    return rewards_distributed
+
+def generate_final_ranking() -> dict:
+    """生成最终排行榜"""
+    # 按伤害排序
+    ranking = sorted(world_boss_damage_records.items(), 
+                    key=lambda x: x[1]["total_damage"], 
+                    reverse=True)
+    
+    ranking_data = {
+        "ranking": [],
+        "total_participants": len(ranking),
+        "total_damage": sum(data["total_damage"] for _, data in ranking)
+    }
+    
+    for i, (user_id, damage_data) in enumerate(ranking, 1):
+        ranking_data["ranking"].append({
+            "rank": i,
+            "user_id": user_id,
+            "nickname": clean_nickname(damage_data["nickname"]),  # 确保昵称干净
+            "wife_name": damage_data["wife_name"],
+            "total_damage": damage_data["total_damage"],
+            "attack_count": damage_data["attack_count"]
+        })
+    
+    return ranking_data
+
+def get_world_boss_status() -> dict:
+    """获取世界Boss状态"""
+    if not world_boss_data:
+        return {"exists": False}
+    
+    # 检查数据完整性
+    required_fields = ["name", "description", "current_phase", "phase_name", "current_hp", "max_hp", "is_defeated"]
+    if not all(field in world_boss_data for field in required_fields):
+        print("[世界Boss] get_world_boss_status: 数据字段不完整，尝试重新初始化...")
+        load_world_boss_data()
+        if not world_boss_data or not all(field in world_boss_data for field in required_fields):
+            return {"exists": False}
+    
+    # 获取伤害排行榜（前10名）
+    damage_ranking = sorted(world_boss_damage_records.items(), 
+                           key=lambda x: x[1]["total_damage"], 
+                           reverse=True)[:10]
+    
+    ranking_display = []
+    for i, (user_id, damage_data) in enumerate(damage_ranking, 1):
+        ranking_display.append({
+            "rank": i,
+            "nickname": clean_nickname(damage_data["nickname"]),  # 确保昵称干净
+            "wife_name": damage_data["wife_name"],
+            "total_damage": damage_data["total_damage"],
+            "attack_count": damage_data["attack_count"]
+        })
+    
+    return {
+        "exists": True,
+        "name": world_boss_data["name"],
+        "description": world_boss_data["description"],
+        "current_phase": world_boss_data["current_phase"],
+        "phase_name": world_boss_data["phase_name"],
+        "current_hp": world_boss_data["current_hp"],
+        "max_hp": world_boss_data["max_hp"],
+        "is_defeated": world_boss_data.get("is_defeated", False),
+        "total_participants": len(world_boss_damage_records),
+        "total_damage_dealt": sum(data["total_damage"] for data in world_boss_damage_records.values()),
+        "ranking": ranking_display
+    }
+
+def reset_world_boss():
+    """重置世界Boss（每周调用）"""
+    global world_boss_data, world_boss_damage_records
+    
+    # 清空伤害记录
+    world_boss_damage_records = {}
+    
+    # TODO: 后续可以扩展为轮换不同的Boss
+    # 现在先重新初始化可可萝
+    world_boss_data = initialize_new_boss("可可萝（黑化）")
+    
+    save_world_boss_data()
+    save_world_boss_damage_records()
+
+# 初始化数据
+def initialize_world_boss_data():
+    """初始化世界Boss数据"""
+    try:
+        load_world_boss_data()
+        boss_name = world_boss_data.get('name', '无')
+        current_phase = world_boss_data.get('current_phase', '未知')
+        current_hp = world_boss_data.get('current_hp', '未知')
+        print(f"世界Boss系统初始化完成，当前Boss: {boss_name}, 阶段: {current_phase}, 血量: {current_hp}")
+        print(f"世界Boss数据字段: {list(world_boss_data.keys()) if world_boss_data else '空'}")
+    except Exception as e:
+        print(f"世界Boss系统初始化失败: {e}")
+        import traceback
+        traceback.print_exc()
