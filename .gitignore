@@ -1,12 +1,5 @@
-daily_limits.json
-dungeon_data.json
-global_wife_data.json
-no_at_users.json
-study_status.json
-user_data.json
-work_status.json
-world_boss_damage_records.json
-world_boss_data.json
+# 忽略data目录下的所有json数据文件
+data/*.json
 __pycache__/
 */__pycache__/
 **/__pycache__/
