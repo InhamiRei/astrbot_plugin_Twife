@@ -90,6 +90,9 @@ class WifePlugin(Star):
             from .core.world_boss_system import initialize_world_boss_data
             initialize_world_boss_data()
             
+            # 设置每日Boss刷新任务
+            self.setup_daily_boss_refresh()
+            
             # 设置全局插件实例引用，让其他模块可以访问调度器
             from .core import data_manager
             data_manager.wife_plugin_instance = self
@@ -167,6 +170,9 @@ class WifePlugin(Star):
             # 咕咕嘎嘎命令（注意：长命令要放在短命令前面，避免匹配冲突）
             "咕咕嘎嘎池": self.scratch_card_handler.prize_pool_query,
             "咕咕嘎嘎": self.scratch_card_handler.scratch_card,
+            
+            # 管理员命令
+            "刷新boss": self.admin_refresh_boss,
             }
 
             self.admins = self.load_admins()
@@ -269,7 +275,7 @@ class WifePlugin(Star):
 
             for command, func in self.commands.items():
                 # 精准匹配：消息必须完全等于命令，或者是带参数的命令
-                match_condition = message_str == command or (command in ["确认老婆", "牛老婆", "查老婆", "老婆详情", "赠送礼物", "出售物品", "购买物品", "出门学习", "出门打工", "购买家具", "出售家具", "家具中心-图片", "前往地下城", "一键出售战利品", "购买服装", "换衣", "脱下", "查询物品", "世界boss", "攻击boss", "咕咕嘎嘎", "咕咕嘎嘎池"] and message_str.startswith(command))
+                match_condition = message_str == command or (command in ["确认老婆", "牛老婆", "查老婆", "老婆详情", "赠送礼物", "出售物品", "购买物品", "出门学习", "出门打工", "购买家具", "出售家具", "家具中心-图片", "前往地下城", "一键出售战利品", "购买服装", "换衣", "脱下", "查询物品", "世界boss", "攻击boss", "咕咕嘎嘎", "咕咕嘎嘎池", "刷新boss"] and message_str.startswith(command))
 
                 if match_condition:
                     # 正式群
@@ -342,7 +348,7 @@ class WifePlugin(Star):
         menu += "27. 老婆详情 - 查询老婆的妹抖值、撒娇值、傲娇值、黑化率、反差萌及装备信息\n"
         menu += "28. 地下城列表 - 查看可进入的地下城列表\n"
         menu += "29. 前往地下城 序号 - 进入指定地下城进行冒险战斗\n"
-        menu += "30. 一键出售战利品 - 快速出售所有地下城获得的战利品\n"
+        menu += "30. 一键出售战利品 - 快速出售所有战利品（地下城+世界Boss奖励）\n"
         menu += "31. 抽老婆菜单 - 显示本菜单\n"
         menu += "32. 服装商店 - 购买精品服装（兔女郎、女仆、巫女、魔法少女、小恶魔套装）\n"
         menu += "33. 购买服装 服装名 - 购买指定服装\n"
@@ -350,9 +356,10 @@ class WifePlugin(Star):
         menu += "35. 脱下 服装名/部位 - 脱下指定服装或部位的装备\n"
         menu += "36. 查询物品 物品名 - 查看物品详情和效果\n"
         menu += "37. 世界boss - 查看当前世界Boss状态和伤害排行榜\n"
-        menu += "38. 攻击boss - 攻击世界Boss，造成伤害（消耗300健康值）\n"
+        menu += "38. 攻击boss - 攻击世界Boss，造成伤害（消耗30健康值）\n"
         menu += "39. 咕咕嘎嘎 [数量] - 花费100金币试试运气，有机会获得咕咕嘎嘎池大奖（概率极低），可批量（如：咕咕嘎嘎 10）\n"
         menu += "40. 咕咕嘎嘎池 - 查看当前咕咕嘎嘎池状态和奖励说明\n"
+        menu += "41. 刷新boss [Boss名称] - 【管理员专用】刷新世界Boss和排行榜（可指定可可萝或大芋头王）\n"
         menu += "\n【系统特色】\n"
         menu += "🎮 完全重构的模块化架构\n"
         menu += "📊 老婆属性系统：等级、成长值、饥饿、清洁、健康、心情\n"
@@ -392,6 +399,62 @@ class WifePlugin(Star):
         # 图片不存在或发送失败时的回退方案，调用家具中心文本功能
         async for result in self.furniture_handler.furniture_center(event):
             yield result
+
+    async def admin_refresh_boss(self, event: AstrMessageEvent):
+        """管理员刷新Boss指令"""
+        try:
+            user_id = str(event.get_sender_id())
+            admin_qq = "1620592237"
+            
+            # 检查是否为管理员
+            if user_id != admin_qq:
+                yield event.plain_result("❌ 权限不足！只有管理员才能使用此命令。")
+                return
+            
+            # 解析命令参数
+            message_str = event.message_str.strip()
+            parts = message_str.split()
+            
+            boss_name = None
+            if len(parts) > 1:
+                # 如果指定了Boss名称
+                boss_param = " ".join(parts[1:])
+                if "可可萝" in boss_param or "kkr" in boss_param.lower():
+                    boss_name = "可可萝（黑化）"
+                elif "芋头" in boss_param or "taro" in boss_param.lower():
+                    boss_name = "大芋头王"
+                else:
+                    yield event.plain_result("❌ 无效的Boss名称！支持：可可萝、大芋头王")
+                    return
+            
+            # 执行Boss刷新
+            from .core.world_boss_system import reset_world_boss, get_daily_boss_name
+            
+            if boss_name:
+                # 刷新为指定Boss
+                actual_boss_name = reset_world_boss(boss_name)
+                result_msg = f"✅ 管理员手动刷新Boss成功！\n"
+                result_msg += f"🐉 新Boss：{actual_boss_name}\n"
+                result_msg += f"📊 所有战斗记录和排行榜已重置\n"
+                result_msg += f"🔄 所有玩家每日攻击次数已重置\n"
+                result_msg += f"⚔️ 快来挑战新的世界Boss吧！"
+            else:
+                # 刷新为今日Boss
+                today_boss = get_daily_boss_name()
+                actual_boss_name = reset_world_boss(today_boss)
+                result_msg = f"✅ 管理员刷新今日Boss成功！\n"
+                result_msg += f"🐉 今日Boss：{actual_boss_name}\n"
+                result_msg += f"📊 所有战斗记录和排行榜已重置\n"
+                result_msg += f"🔄 所有玩家每日攻击次数已重置\n"
+                result_msg += f"⚔️ 快来挑战新的世界Boss吧！"
+            
+            yield event.plain_result(result_msg)
+            
+        except Exception as e:
+            print(f"[管理员刷新Boss] 执行失败: {e}")
+            import traceback
+            traceback.print_exc()
+            yield event.plain_result(f"❌ 刷新Boss时发生错误: {str(e)}")
 
     def restore_pending_tasks(self):
         """恢复重启前未完成的定时任务"""
@@ -591,6 +654,43 @@ class WifePlugin(Star):
         """处理打工完成并返回消息"""  
         from .core.work_system import process_work_completion
         return process_work_completion(user_id)
+
+    def setup_daily_boss_refresh(self):
+        """设置每日Boss刷新任务"""
+        try:
+            # 每天凌晨0:01刷新Boss
+            self.scheduler.add_job(
+                self._daily_boss_refresh_callback,
+                "cron",
+                id="daily_boss_refresh",
+                hour=0,
+                minute=1,
+                misfire_grace_time=3600,  # 1小时的宽限时间
+            )
+            print("[世界Boss] 已设置每日Boss刷新任务（每天0:01执行）")
+        except Exception as e:
+            print(f"[世界Boss] 设置每日刷新任务失败: {e}")
+
+    async def _daily_boss_refresh_callback(self):
+        """每日Boss刷新回调函数"""
+        try:
+            print("[世界Boss] 开始执行每日Boss刷新...")
+            
+            from .core.world_boss_system import reset_world_boss, get_daily_boss_name
+            
+            # 获取今日Boss并刷新
+            today_boss = get_daily_boss_name()
+            reset_world_boss(today_boss)
+            
+            print(f"[世界Boss] 每日刷新完成，今日Boss: {today_boss}")
+            
+            # 可以在这里添加通知逻辑，比如向群组发送Boss刷新消息
+            # 但需要知道具体的群组ID
+            
+        except Exception as e:
+            print(f"[世界Boss] 每日刷新回调执行失败: {e}")
+            import traceback
+            traceback.print_exc()
 
     async def terminate(self):
         """插件终止时的清理工作"""

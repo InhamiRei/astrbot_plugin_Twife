@@ -15,20 +15,37 @@ WORLD_BOSS_CONFIG = {
         "description": "被黑暗力量侵蚀的公主，散发着危险的气息",
         "phases": [
             {"phase": 1, "max_hp": 1000, "name": "小小引导者"},
-            {"phase": 2, "max_hp": 50000, "name": "极光绽放"},
-            {"phase": 3, "max_hp": 100000, "name": "精灵的启示"}
+            {"phase": 2, "max_hp": 5000, "name": "极光绽放"},
+            {"phase": 3, "max_hp": 10000, "name": "精灵的启示"}
         ],
         "rewards": {
             1: {"coins": [10000, 20000], "items": ["可可萝的围裙", "温暖的料理", "美食食谱"]},
             2: {"coins": [50000, 100000], "items": ["可可萝的围裙", "温暖的料理", "美食食谱", "可可萝的笑容", "公主之心"]},
             3: {"coins": [100000, 150000], "items": ["可可萝的围裙", "温暖的料理", "美食食谱", "可可萝的笑容", "公主之心", "可可萝的发夹", "厨师的骄傲"]}
-        }
+        },
+        "voice_dir": "kkr"
+    },
+    "大芋头王": {
+        "name": "大芋头王",
+        "description": "巨大的芋头成精，散发着香甜诱人的气息",
+        "phases": [
+            {"phase": 1, "max_hp": 1000, "name": "香甜表皮"},
+            {"phase": 2, "max_hp": 5000, "name": "软糯内心"},
+            {"phase": 3, "max_hp": 10000, "name": "芋头之王"}
+        ],
+        "rewards": {
+            1: {"coins": [8000, 15000], "items": ["芋头片", "烤芋头", "芋头泥"]},
+            2: {"coins": [40000, 80000], "items": ["芋头片", "烤芋头", "芋头泥", "金芋头", "芋头王冠"]},
+            3: {"coins": [80000, 120000], "items": ["芋头片", "烤芋头", "芋头泥", "金芋头", "芋头王冠", "芋头圣杯", "芋头权杖"]}
+        },
+        "voice_dir": "taro"
     }
 }
 
 # 全局Boss状态数据
 world_boss_data = {}
 world_boss_damage_records = {}  # 记录每个用户对boss造成的伤害
+daily_attack_counts = {}  # 记录每个用户每日攻击次数
 
 def clean_nickname(nickname: str) -> str:
     """清理昵称，去除图片文件后缀"""
@@ -46,12 +63,13 @@ def clean_nickname(nickname: str) -> str:
 
 def load_world_boss_data():
     """加载世界Boss数据"""
-    global world_boss_data, world_boss_damage_records
+    global world_boss_data, world_boss_damage_records, daily_attack_counts
 
     # 使用正确的数据目录路径
     from ..config.settings import DATA_DIR
     boss_data_file = os.path.join(DATA_DIR, 'world_boss_data.json')
     damage_records_file = os.path.join(DATA_DIR, 'world_boss_damage_records.json')
+    daily_attacks_file = os.path.join(DATA_DIR, 'daily_attack_counts.json')
     
     # 加载Boss状态数据
     if not os.path.exists(boss_data_file):
@@ -76,6 +94,24 @@ def load_world_boss_data():
     else:
         with open(damage_records_file, 'r', encoding='utf-8') as f:
             world_boss_damage_records = json.load(f)
+    
+    # 加载每日攻击次数
+    if not os.path.exists(daily_attacks_file):
+        daily_attack_counts = {}
+        save_daily_attack_counts()
+    else:
+        with open(daily_attacks_file, 'r', encoding='utf-8') as f:
+            daily_attack_counts = json.load(f)
+        
+        # 检查是否需要重置每日攻击次数（新的一天）
+        today = datetime.now().strftime("%Y-%m-%d")
+        if daily_attack_counts.get("last_reset_date") != today:
+            print(f"[世界Boss] 检测到新的一天，重置每日攻击次数")
+            daily_attack_counts = {
+                "last_reset_date": today,
+                "counts": {}
+            }
+            save_daily_attack_counts()
 
 def save_world_boss_data():
     """保存世界Boss数据"""
@@ -90,6 +126,13 @@ def save_world_boss_damage_records():
     damage_records_file = os.path.join(DATA_DIR, 'world_boss_damage_records.json')
     with open(damage_records_file, 'w', encoding='utf-8') as f:
         json.dump(world_boss_damage_records, f, ensure_ascii=False, indent=4)
+
+def save_daily_attack_counts():
+    """保存每日攻击次数"""
+    from ..config.settings import DATA_DIR
+    daily_attacks_file = os.path.join(DATA_DIR, 'daily_attack_counts.json')
+    with open(daily_attacks_file, 'w', encoding='utf-8') as f:
+        json.dump(daily_attack_counts, f, ensure_ascii=False, indent=4)
 
 def initialize_new_boss(boss_name: str) -> dict:
     """初始化新的世界Boss"""
@@ -190,7 +233,7 @@ def attack_world_boss(user_id: str, nickname: str, group_id: str) -> dict:
     Returns:
         dict: 攻击结果，包含伤害、Boss状态变化等信息
     """
-    global world_boss_data, world_boss_damage_records
+    global world_boss_data, world_boss_damage_records, daily_attack_counts
     
     # 检查Boss是否存在并且数据完整
     if not world_boss_data or world_boss_data.get("is_defeated", True):
@@ -204,6 +247,20 @@ def attack_world_boss(user_id: str, nickname: str, group_id: str) -> dict:
         load_world_boss_data()
         if not world_boss_data or not all(field in world_boss_data for field in required_fields):
             return {"success": False, "message": "世界Boss数据异常，请联系管理员！"}
+    
+    # 检查每日攻击次数限制
+    today = datetime.now().strftime("%Y-%m-%d")
+    if daily_attack_counts.get("last_reset_date") != today:
+        # 如果是新的一天，重置攻击次数
+        daily_attack_counts = {
+            "last_reset_date": today,
+            "counts": {}
+        }
+        save_daily_attack_counts()
+    
+    user_attack_count = daily_attack_counts.get("counts", {}).get(user_id, 0)
+    if user_attack_count >= 5:
+        return {"success": False, "message": f"你今天已经攻击了{user_attack_count}次Boss，每天最多只能攻击5次！请明天再来！"}
     
     # 检查老婆是否存在
     wife_data = get_user_wife_data(user_id)
@@ -220,23 +277,43 @@ def attack_world_boss(user_id: str, nickname: str, group_id: str) -> dict:
     
     # 检查阶段伤害阈值
     current_phase = world_boss_data["current_phase"]
+    boss_name = world_boss_data["name"]
     
-    # 2阶段需要至少1000伤害才能破防
-    if current_phase == 2 and damage < 1000:
-        return {
-            "success": False,
-            "message": f"你的攻击只造成了{damage}点伤害！\n可可萝的【极光护盾】闪闪发光，完全挡住了你的攻击！\n( ´∀｀)σ \n"
-        }
+    # # 2阶段需要至少1000伤害才能破防
+    # if current_phase == 2 and damage < 1000:
+    #     if "可可萝" in boss_name:
+    #         message = f"你的攻击只造成了{damage}点伤害！\n可可萝的【极光护盾】闪闪发光，完全挡住了你的攻击！\n( ´∀｀)σ"
+    #     elif "芋头" in boss_name:
+    #         message = f"你的攻击只造成了{damage}点伤害！\n大芋头王的【软糯护壁】弹性十足，吸收了你的攻击！\n(๑´ڡ`๑)"
+    #     else:
+    #         message = f"你的攻击只造成了{damage}点伤害！\nBoss的防护完全挡住了你的攻击！"
+        
+    #     return {
+    #         "success": False,
+    #         "message": message
+    #     }
     
-    # 3阶段需要至少3000伤害才能破防  
-    if current_phase == 3 and damage < 3000:
-        return {
-            "success": False,
-            "message": f"你的攻击只造成了{damage}点伤害！\n【精灵启示】的神圣光芒包围着可可萝，你的攻击被完全无效化了！\n(｡◕∀◕｡) ~\n"
-        }
+    # # 3阶段需要至少3000伤害才能破防  
+    # if current_phase == 3 and damage < 3000:
+    #     if "可可萝" in boss_name:
+    #         message = f"你的攻击只造成了{damage}点伤害！\n【精灵启示】的神圣光芒包围着可可萝，你的攻击被完全无效化了！\n(｡◕∀◕｡) ~"
+    #     elif "芋头" in boss_name:
+    #         message = f"你的攻击只造成了{damage}点伤害！\n【芋头之王】的威严不可侵犯，香甜的气息化解了你的攻击！\n(◕‿◕)♡"
+    #     else:
+    #         message = f"你的攻击只造成了{damage}点伤害！\nBoss的最终防护完全无效化了你的攻击！"
+        
+    #     return {
+    #         "success": False,
+    #         "message": message
+    #     }
     
     # 攻击成功，扣除健康值
     update_user_wife_data(user_id, health=current_health - 30)
+    
+    # 更新每日攻击次数
+    if "counts" not in daily_attack_counts:
+        daily_attack_counts["counts"] = {}
+    daily_attack_counts["counts"][user_id] = daily_attack_counts["counts"].get(user_id, 0) + 1
     
     # 记录伤害
     clean_nick = clean_nickname(nickname)  # 清理昵称
@@ -257,16 +334,46 @@ def attack_world_boss(user_id: str, nickname: str, group_id: str) -> dict:
     world_boss_data["current_hp"] -= damage
     world_boss_data["last_attack_time"] = datetime.now().isoformat()
     
+    # 给予每次攻击的基础奖励 - 根据Boss类型确定奖励物品
+    base_reward_coins = random.randint(200, 500)  # 200-500金币
+    boss_name = world_boss_data["name"]
+    
+    if "可可萝" in boss_name:
+        # 可可萝相关的基础奖励
+        base_reward_items = ["小血瓶", "能量药水", "可可萝的祝福", "公主护身符", "料理残渣"]
+    elif "芋头" in boss_name:
+        # 大芋头王相关的基础奖励
+        base_reward_items = ["小血瓶", "能量药水", "芋头渣", "芋头种子", "香甜精华"]
+    else:
+        # 默认奖励
+        base_reward_items = ["小血瓶", "能量药水", "经验药水", "金币袋", "勇气徽章"]
+    
+    selected_item = random.choice(base_reward_items)
+    
+    # 发放基础奖励
+    user_data_obj = get_user_data(user_id)
+    user_data_obj["coins"] += base_reward_coins
+    
+    # 发放基础战利品
+    if selected_item not in user_data_obj["trophies"]:
+        user_data_obj["trophies"][selected_item] = 0
+    user_data_obj["trophies"][selected_item] += 1
+    
+    save_user_data()  # 保存用户数据
+    
     result = {
         "success": True,
         "damage": damage,
         "damage_detail": damage_detail,
         "boss_current_hp": world_boss_data["current_hp"],
         "boss_max_hp": world_boss_data["max_hp"],
+        "boss_name": world_boss_data["name"],  # 添加Boss名称，确保语音播放正确
         "phase_defeated": False,
         "boss_defeated": False,
         "phase_rewards": None,
-        "final_rewards": None
+        "final_rewards": None,
+        "base_reward_coins": base_reward_coins,
+        "base_reward_item": selected_item
     }
     
     # 检查是否击败当前阶段
@@ -305,6 +412,7 @@ def attack_world_boss(user_id: str, nickname: str, group_id: str) -> dict:
     # 保存数据
     save_world_boss_data()
     save_world_boss_damage_records()
+    save_daily_attack_counts()
     
     return result
 
@@ -432,31 +540,104 @@ def get_world_boss_status() -> dict:
         "ranking": ranking_display
     }
 
-def reset_world_boss():
-    """重置世界Boss（每周调用）"""
-    global world_boss_data, world_boss_damage_records
+def get_daily_boss_name():
+    """根据当前日期确定今天的Boss"""
+    import hashlib
+    
+    # 获取今天的日期
+    today = datetime.now().strftime("%Y-%m-%d")
+    
+    # 使用日期的哈希值来决定Boss，这样每天的Boss是固定的但看起来随机
+    hash_value = int(hashlib.md5(today.encode()).hexdigest(), 16)
+    
+    boss_list = ["可可萝（黑化）", "大芋头王"]
+    boss_index = hash_value % len(boss_list)
+    
+    return boss_list[boss_index]
+
+def reset_world_boss(boss_name=None):
+    """重置世界Boss（每天自动调用或管理员指定）"""
+    global world_boss_data, world_boss_damage_records, daily_attack_counts
+    
+    # 如果没有指定Boss名称，则使用今日Boss
+    if boss_name is None:
+        boss_name = get_daily_boss_name()
     
     # 清空伤害记录
     world_boss_damage_records = {}
     
-    # TODO: 后续可以扩展为轮换不同的Boss
-    # 现在先重新初始化可可萝
-    world_boss_data = initialize_new_boss("可可萝（黑化）")
+    # 重置每日攻击次数
+    today = datetime.now().strftime("%Y-%m-%d")
+    daily_attack_counts = {
+        "last_reset_date": today,
+        "counts": {}
+    }
+    
+    # 初始化指定的Boss
+    world_boss_data = initialize_new_boss(boss_name)
     
     save_world_boss_data()
     save_world_boss_damage_records()
+    save_daily_attack_counts()
+    
+    print(f"[世界Boss] 已重置为新Boss: {boss_name}")
+    return boss_name
+
+def check_and_refresh_daily_boss():
+    """检查并刷新每日Boss"""
+    try:
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        
+        # 检查Boss是否需要刷新
+        if not world_boss_data:
+            # 没有Boss数据，初始化今日Boss
+            boss_name = reset_world_boss()
+            return boss_name
+        
+        # 检查Boss创建日期
+        boss_created_date = world_boss_data.get("created_at", "")
+        if boss_created_date:
+            try:
+                created_datetime = datetime.fromisoformat(boss_created_date)
+                created_date = created_datetime.strftime("%Y-%m-%d")
+                
+                if created_date != current_date:
+                    # Boss需要刷新
+                    boss_name = reset_world_boss()
+                    print(f"[世界Boss] 检测到新的一天，自动刷新Boss为: {boss_name}")
+                    return boss_name
+            except Exception as e:
+                print(f"[世界Boss] 解析Boss创建时间失败: {e}")
+                # 如果解析失败，重新创建Boss
+                boss_name = reset_world_boss()
+                return boss_name
+        
+        # Boss不需要刷新，返回当前Boss名称
+        return world_boss_data.get("name", "可可萝（黑化）")
+        
+    except Exception as e:
+        print(f"[世界Boss] 检查Boss刷新时出错: {e}")
+        # 出错时初始化一个新Boss
+        return reset_world_boss()
 
 # 初始化数据
 def initialize_world_boss_data():
     """初始化世界Boss数据"""
     try:
         load_world_boss_data()
+        
+        # 检查并刷新每日Boss
+        current_boss_name = check_and_refresh_daily_boss()
+        
         boss_name = world_boss_data.get('name', '无')
         current_phase = world_boss_data.get('current_phase', '未知')
         current_hp = world_boss_data.get('current_hp', '未知')
         print(f"世界Boss系统初始化完成，当前Boss: {boss_name}, 阶段: {current_phase}, 血量: {current_hp}")
         print(f"世界Boss数据字段: {list(world_boss_data.keys()) if world_boss_data else '空'}")
+        
+        return current_boss_name
     except Exception as e:
         print(f"世界Boss系统初始化失败: {e}")
         import traceback
         traceback.print_exc()
+        return None

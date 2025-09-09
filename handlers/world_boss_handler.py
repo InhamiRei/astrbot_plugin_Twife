@@ -8,29 +8,47 @@ import random
 
 class WorldBossHandler:
     def __init__(self):
-        # 获取可可萝语音文件目录
+        # 获取Boss语音文件目录
         current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        self.voice_dir = os.path.join(current_dir, "static", "boss", "kkr")
+        self.boss_voice_base_dir = os.path.join(current_dir, "static", "boss")
 
-    def get_random_kkr_voice(self):
-        """随机选择一个可可萝语音文件"""
+    def get_random_boss_voice(self, boss_name="可可萝（黑化）"):
+        """根据Boss类型随机选择语音文件"""
         try:
-            if not os.path.exists(self.voice_dir):
+            # 根据Boss名称确定语音目录
+            if "可可萝" in boss_name:
+                voice_dir = os.path.join(self.boss_voice_base_dir, "kkr")
+                # 可可萝使用小写的mp3文件
+                extensions = ('.mp3', '.wav', '.ogg')
+            elif "芋头" in boss_name:
+                voice_dir = os.path.join(self.boss_voice_base_dir, "taro")
+                # 大芋头王使用大写的MP3文件
+                extensions = ('.MP3', '.mp3', '.wav', '.ogg')
+            else:
+                # 默认使用可可萝语音
+                voice_dir = os.path.join(self.boss_voice_base_dir, "kkr")
+                extensions = ('.mp3', '.wav', '.ogg')
+            
+            if not os.path.exists(voice_dir):
+                print(f"[World Boss Handler] 语音目录不存在: {voice_dir}")
                 return None
             
             # 获取所有音频文件
-            voice_files = [f for f in os.listdir(self.voice_dir) 
-                          if f.endswith(('.mp3', '.wav', '.ogg'))]
+            voice_files = [f for f in os.listdir(voice_dir) 
+                          if f.endswith(extensions)]
             
             if not voice_files:
+                print(f"[World Boss Handler] 在{voice_dir}中未找到语音文件")
                 return None
             
             # 随机选择一个语音文件
             selected_voice = random.choice(voice_files)
-            return os.path.join(self.voice_dir, selected_voice)
+            voice_path = os.path.join(voice_dir, selected_voice)
+            print(f"[World Boss Handler] 选择了语音文件: {voice_path}")
+            return voice_path
             
         except Exception as e:
-            print(f"[World Boss Handler] 获取可可萝语音失败: {e}")
+            print(f"[World Boss Handler] 获取Boss语音失败: {e}")
             return None
 
     async def world_boss_status(self, event: AstrMessageEvent):
@@ -45,7 +63,7 @@ class WorldBossHandler:
             boss_status = get_world_boss_status()
             
             if not boss_status.get("exists", False):
-                yield event.plain_result("当前没有世界Boss，请等待管理员刷新Boss！")
+                yield event.plain_result("当前没有世界Boss，新Boss将在明天凌晨自动刷新！")
                 return
             
             # 构建状态消息
@@ -79,6 +97,7 @@ class WorldBossHandler:
             
             if not boss_status.get('is_defeated', False):
                 status_msg += "\n⚠️ 每次攻击消耗30点健康值"
+                status_msg += "\n🔢 每人每天最多可攻击5次"
                 status_msg += "\n💪 使用'攻击boss'命令参与战斗！"
 
             yield event.plain_result(status_msg)
@@ -112,6 +131,11 @@ class WorldBossHandler:
             # result_msg += f"攻击者：{nickname}\n"
             result_msg += f"造成伤害：{attack_result['damage']:,}\n"
             # result_msg += f"计算详情：{attack_result['damage_detail']}\n"
+            
+            # 显示基础奖励
+            if 'base_reward_coins' in attack_result and 'base_reward_item' in attack_result:
+                result_msg += f"💰 基础奖励：{attack_result['base_reward_coins']}金币\n"
+                result_msg += f"🎁 战利品：{attack_result['base_reward_item']} x1\n"
             
             # Boss血量信息
             hp_percentage = (attack_result['boss_current_hp'] / attack_result['boss_max_hp']) * 100 if attack_result['boss_current_hp'] > 0 else 0
@@ -157,14 +181,17 @@ class WorldBossHandler:
                     # result_msg += f"新阶段血量：{attack_result['next_phase_hp']:,}\n"
                     # result_msg += "继续战斗吧勇士们！"
 
-            # 攻击成功后播放可可萝语音，和攻击结果一起发送
-            voice_file = self.get_random_kkr_voice()
+            # 攻击成功后播放Boss对应的语音，和攻击结果一起发送
+            # 从攻击结果中获取Boss名称，确保即使Boss被击败也能正确播放语音
+            boss_name = attack_result.get("boss_name", "可可萝（黑化）")
+            
+            voice_file = self.get_random_boss_voice(boss_name)
             if voice_file:
                 try:
                     # 将攻击结果和语音一起发送
                     yield event.chain_result([Plain(result_msg), Record(file=voice_file)])
                 except Exception as e:
-                    print(f"[World Boss Handler] 播放可可萝语音失败: {e}")
+                    print(f"[World Boss Handler] 播放Boss语音失败: {e}")
                     # 如果语音发送失败，至少发送攻击结果
                     yield event.plain_result(result_msg)
             else:
@@ -193,7 +220,7 @@ class WorldBossHandler:
                     ranking_msg += f"{medal}{entry['rank']}. {entry['nickname']}({entry['wife_name']}) - "
                     ranking_msg += f"{entry['total_damage']:,}伤害 (共{entry['attack_count']}次攻击, 平均{damage_per_attack:.0f})\n"
                 
-                ranking_msg += "\n🎉 感谢所有勇士的参与！下次世界Boss将在一周后刷新！"
+                ranking_msg += "\n🎉 感谢所有勇士的参与！新的世界Boss将在明天凌晨自动刷新！"
                 
                 yield event.plain_result(ranking_msg)
 
