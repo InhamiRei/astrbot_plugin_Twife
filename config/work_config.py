@@ -1,4 +1,19 @@
-"""工作配置文件 - 所有可用工作的定义"""
+"""工作配置文件 - 所有可用工作的定义
+
+工作配置字段说明：
+- id: 工作编号，用于命令中选择工作
+- name: 工作名称，显示给用户看的
+- pay: 工作报酬，完成工作后获得的金币数量
+- duration: 工作时长，单位为小时
+- description: 工作描述，详细介绍工作内容
+- hunger_cost: 饥饿值消耗，工作会减少老婆的饥饿值
+- cleanliness_cost: 清洁值消耗，工作会减少老婆的清洁值
+- mood_cost: 心情值消耗，正数表示减少心情，负数表示增加心情
+- health_cost: 健康值消耗，工作会减少老婆的健康值
+- growth_reward: 成长值奖励，完成工作后老婆获得的成长值
+- level_required: 等级要求，老婆需要达到的最低等级
+- education_required: 学历要求，对应学历等级：0=无要求，1=小学，2=初中，3=高中，4=大学，5=研究生，6=博士
+"""
 
 # 工作列表配置
 WORK_LIST = [
@@ -12,7 +27,7 @@ WORK_LIST = [
         "cleanliness_cost": 25,
         "mood_cost": 10,
         "health_cost": 5,
-        "growth_reward": 8,
+        "growth_reward": 50,
         "level_required": 1,
         "education_required": 0
     },
@@ -26,7 +41,7 @@ WORK_LIST = [
         "cleanliness_cost": 5,
         "mood_cost": 15,
         "health_cost": 0,
-        "growth_reward": 5,
+        "growth_reward": 100,
         "level_required": 1,
         "education_required": 0
     },
@@ -40,7 +55,7 @@ WORK_LIST = [
         "cleanliness_cost": 15,
         "mood_cost": 5,
         "health_cost": 8,
-        "growth_reward": 12,
+        "growth_reward": 150,
         "level_required": 2,
         "education_required": 1
     },
@@ -54,7 +69,7 @@ WORK_LIST = [
         "cleanliness_cost": 10,
         "mood_cost": 8,
         "health_cost": 10,
-        "growth_reward": 15,
+        "growth_reward": 200,
         "level_required": 2,
         "education_required": 1
     },
@@ -68,7 +83,7 @@ WORK_LIST = [
         "cleanliness_cost": 5,
         "mood_cost": 5,
         "health_cost": 0,
-        "growth_reward": 20,
+        "growth_reward": 250,
         "level_required": 3,
         "education_required": 1
     },
@@ -82,7 +97,7 @@ WORK_LIST = [
         "cleanliness_cost": 20,
         "mood_cost": 12,
         "health_cost": 15,
-        "growth_reward": 18,
+        "growth_reward": 300,
         "level_required": 3,
         "education_required": 2
     },
@@ -96,7 +111,7 @@ WORK_LIST = [
         "cleanliness_cost": 25,
         "mood_cost": 10,
         "health_cost": 20,
-        "growth_reward": 20,
+        "growth_reward": 350,
         "level_required": 4,
         "education_required": 2
     },
@@ -110,21 +125,21 @@ WORK_LIST = [
         "cleanliness_cost": 20,
         "mood_cost": -5,
         "health_cost": 8,
-        "growth_reward": 15,
+        "growth_reward": 400,
         "level_required": 5,
         "education_required": 2
     },
     {
         "id": 9,
-        "name": "图书馆管理员",
+        "name": "游戏账号代练",
         "pay": 5500,
         "duration": 8,
-        "description": "在图书馆整理图书和协助读者，需要一定的文化基础",
+        "description": "帮土豪玩家刷等级，手速和肝要够硬",
         "hunger_cost": 20,
         "cleanliness_cost": 5,
         "mood_cost": -8,
         "health_cost": 5,
-        "growth_reward": 20,
+        "growth_reward": 450,
         "level_required": 5,
         "education_required": 3
     },
@@ -138,78 +153,92 @@ WORK_LIST = [
         "cleanliness_cost": 15,
         "mood_cost": 5,
         "health_cost": 10,
-        "growth_reward": 35,
+        "growth_reward": 500,
         "level_required": 6,
         "education_required": 3
     },
     {
         "id": 11,
-        "name": "家教老师",
+        "name": "弹幕审核官",
         "pay": 9000,
         "duration": 8,
-        "description": "为学生提供课外辅导，需要扎实的学科基础",
+        "description": "日常工作就是在屏幕前刷‘2333’，需要强大心理承受力",
         "hunger_cost": 15,
         "cleanliness_cost": 5,
         "mood_cost": -12,
         "health_cost": 5,
-        "growth_reward": 25,
+        "growth_reward": 1000,
         "level_required": 7,
         "education_required": 4
     },
     {
         "id": 12,
-        "name": "翻译助理",
+        "name": "鉴黄师",
         "pay": 12000,
         "duration": 8,
-        "description": "协助处理文件翻译工作，需要较高的语言能力",
+        "description": "传说中的神秘职业，看片看到怀疑人生，需要极强的心理素质",
         "hunger_cost": 20,
         "cleanliness_cost": 5,
         "mood_cost": -8,
         "health_cost": 8,
-        "growth_reward": 28,
+        "growth_reward": 1500,
         "level_required": 8,
         "education_required": 5
     },
     {
         "id": 13,
-        "name": "活动策划助手",
+        "name": "网红吃播助理",
         "pay": 12500,
         "duration": 8,
-        "description": "协助策划和执行各种活动，需要创意和组织能力",
+        "description": "负责给吃播补菜、擦嘴和打光，比吃的人还累",
         "hunger_cost": 30,
         "cleanliness_cost": 12,
         "mood_cost": -3,
         "health_cost": 15,
-        "growth_reward": 30,
+        "growth_reward": 2000,
         "level_required": 10,
         "education_required": 5
     },
     {
         "id": 14,
-        "name": "私人助理",
+        "name": "梦话记录员",
         "pay": 13000,
         "duration": 8,
-        "description": "为企业高管提供日常助理服务，需要高度的专业素养",
+        "description": "每天负责监听别人梦话，整理成日报，需要极强的忍笑能力",
         "hunger_cost": 20,
         "cleanliness_cost": 8,
         "mood_cost": 5,
         "health_cost": 10,
-        "growth_reward": 35,
+        "growth_reward": 3000,
         "level_required": 15,
         "education_required": 6
     },
     {
         "id": 15,
-        "name": "科研助理",
+        "name": "尸体化妆师",
         "pay": 20000,
         "duration": 12,
-        "description": "协助进行学术研究工作，需要极高的学术水平",
+        "description": "让死去的人也能像生前一样好看，胆量和技术都要过硬",
         "hunger_cost": 25,
         "cleanliness_cost": 5,
         "mood_cost": -10,
         "health_cost": 15,
-        "growth_reward": 40,
+        "growth_reward": 5000,
         "level_required": 20,
+        "education_required": 6
+    },
+    {
+        "id": 16,
+        "name": "暴雪帝国史官",
+        "pay": 50000,
+        "duration": 8,
+        "description": "记录暴雪帝国的编年史，是个神圣的职业",
+        "hunger_cost": 100,
+        "cleanliness_cost": 50,
+        "mood_cost": -50,
+        "health_cost": 50,
+        "growth_reward": 10000,
+        "level_required": 30,
         "education_required": 7
     }
 ]

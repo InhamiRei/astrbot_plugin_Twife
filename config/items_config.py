@@ -601,11 +601,11 @@ ITEMS_LIST = [
         "buy_price": 25
     },
     {
-        "name": "面包",
+        "name": "德国黑面包",
         "weight": 8,
         "min_count": 1,
         "max_count": 3,
-        "description": "🍞 新鲜出炉的面包，香气扑鼻",
+        "description": "🍞 传说这条面包里夹带了一整个魏玛共和国",
         "sell_price": 8,
         "affection_value": 0.25,
         "hunger_effect": 80,
