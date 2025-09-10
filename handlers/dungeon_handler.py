@@ -274,22 +274,23 @@ class DungeonHandler:
             new_mood = max(0, original_mood + DUNGEON_REWARDS['stat_penalty']['mood'])
 
             # 增加特殊属性（有概率增加，不是必然的）
-            new_moe = moe_value
-            new_spoil = spoil_value  
-            new_tsundere = tsundere_value
+            # 注意：这里应该基于基础属性值进行增长，而不是装备加成后的值
+            new_moe = base_moe_value
+            new_spoil = base_spoil_value  
+            new_tsundere = base_tsundere_value
             
             # 妹抖值（武力）增加 - 70%概率
             if random.random() < 0.7:
                 attr_gain = random.randint(DUNGEON_REWARDS['attribute_gain_min'], DUNGEON_REWARDS['attribute_gain_max'])
-                new_moe = moe_value + attr_gain
+                new_moe = base_moe_value + attr_gain
             
             # 撒娇值（智力）增加 - 60%概率
             if random.random() < 0.6:
-                new_spoil = spoil_value + random.randint(1, 2)
+                new_spoil = base_spoil_value + random.randint(1, 2)
             
             # 傲娇值（敏捷）增加 - 60%概率  
             if random.random() < 0.6:
-                new_tsundere = tsundere_value + random.randint(1, 2)
+                new_tsundere = base_tsundere_value + random.randint(1, 2)
                 
             new_dark = dark_rate        # 黑化率（暴击率）保持不变
             new_contrast = contrast_cute # 反差萌（暴击伤害）保持不变
