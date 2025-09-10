@@ -278,20 +278,20 @@ class DungeonHandler:
             new_moe = base_moe_value
             new_spoil = base_spoil_value  
             new_tsundere = base_tsundere_value
-            
+
             # 妹抖值（武力）增加 - 70%概率
             if random.random() < 0.7:
                 attr_gain = random.randint(DUNGEON_REWARDS['attribute_gain_min'], DUNGEON_REWARDS['attribute_gain_max'])
                 new_moe = base_moe_value + attr_gain
-            
+
             # 撒娇值（智力）增加 - 60%概率
             if random.random() < 0.6:
                 new_spoil = base_spoil_value + random.randint(1, 2)
-            
-            # 傲娇值（敏捷）增加 - 60%概率  
+
+            # 傲娇值（敏捷）增加 - 60%概率
             if random.random() < 0.6:
                 new_tsundere = base_tsundere_value + random.randint(1, 2)
-                
+
             new_dark = dark_rate        # 黑化率（暴击率）保持不变
             new_contrast = contrast_cute # 反差萌（暴击伤害）保持不变
 
