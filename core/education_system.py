@@ -166,7 +166,7 @@ def process_study_completion(user_id: str):
         return None
     
     # 计算学习收益
-    base_knowledge_gain = hours * random.randint(15, 25)  # 每小时15-25学识（基础）
+    base_knowledge_gain = sum(random.randint(20, 30) for _ in range(hours))  # 学习N小时就抽取N次20-30的随机数相加
     growth_gain = hours * random.randint(5, 10)      # 每小时5-10成长值
     
     # 应用房产学习加成到学识
