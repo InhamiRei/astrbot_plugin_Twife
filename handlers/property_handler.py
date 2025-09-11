@@ -36,8 +36,8 @@ class PropertyHandler:
         else:
             property_info += "🎉 已拥有最高级房产！\n"
         
-        property_info += "\n📋 完整房产列表：\n"
-        property_info += format_property_list()
+        property_info += "\n📋 房产等级列表：\n"
+        property_info += format_property_list(current_level)
         
         yield event.plain_result(property_info)
 

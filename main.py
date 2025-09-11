@@ -93,6 +93,7 @@ class WifePlugin(Star):
             # 设置每日Boss刷新任务
             self.setup_daily_boss_refresh()
             
+            
             # 设置全局插件实例引用，让其他模块可以访问调度器
             from .core import data_manager
             data_manager.wife_plugin_instance = self
@@ -173,6 +174,7 @@ class WifePlugin(Star):
             
             # 管理员命令
             "刷新boss": self.admin_refresh_boss,
+            "全体赔偿": self.admin_global_compensation,
             }
 
             self.admins = self.load_admins()
@@ -275,7 +277,7 @@ class WifePlugin(Star):
 
             for command, func in self.commands.items():
                 # 精准匹配：消息必须完全等于命令，或者是带参数的命令
-                match_condition = message_str == command or (command in ["确认老婆", "牛老婆", "查老婆", "老婆详情", "赠送礼物", "出售物品", "购买物品", "出门学习", "出门打工", "购买家具", "出售家具", "家具中心-图片", "前往地下城", "一键出售战利品", "购买服装", "换衣", "脱下", "查询物品", "世界boss", "攻击boss", "咕咕嘎嘎", "咕咕嘎嘎池", "刷新boss"] and message_str.startswith(command))
+                match_condition = message_str == command or (command in ["确认老婆", "牛老婆", "查老婆", "老婆详情", "赠送礼物", "出售物品", "购买物品", "出门学习", "出门打工", "购买家具", "出售家具", "家具中心-图片", "前往地下城", "一键出售战利品", "购买服装", "换衣", "脱下", "查询物品", "世界boss", "攻击boss", "咕咕嘎嘎", "咕咕嘎嘎池", "刷新boss", "全体赔偿"] and message_str.startswith(command))
 
                 if match_condition:
                     # 正式群
@@ -360,6 +362,7 @@ class WifePlugin(Star):
         menu += "39. 咕咕嘎嘎 [数量] - 花费100金币试试运气，有机会获得咕咕嘎嘎池大奖（概率极低），可批量（如：咕咕嘎嘎 10）\n"
         menu += "40. 咕咕嘎嘎池 - 查看当前咕咕嘎嘎池状态和奖励说明\n"
         menu += "41. 刷新boss [Boss名称] - 【管理员专用】刷新世界Boss和排行榜（可指定可可萝或大芋头王）\n"
+        menu += "42. 全体赔偿 金币数量 - 【管理员专用】给所有用户赔偿指定数量的金币\n"
         menu += "\n【系统特色】\n"
         menu += "🎮 完全重构的模块化架构\n"
         menu += "📊 老婆属性系统：等级、成长值、饥饿、清洁、健康、心情\n"
@@ -408,7 +411,7 @@ class WifePlugin(Star):
             
             # 检查是否为管理员
             if user_id != admin_qq:
-                yield event.plain_result("❌ 权限不足！只有管理员才能使用此命令。")
+                yield event.plain_result("❌ 权限不足喵~")
                 return
             
             # 解析命令参数
@@ -455,6 +458,103 @@ class WifePlugin(Star):
             import traceback
             traceback.print_exc()
             yield event.plain_result(f"❌ 刷新Boss时发生错误: {str(e)}")
+
+    async def admin_global_compensation(self, event: AstrMessageEvent):
+        """管理员全体赔偿指令"""
+        try:
+            user_id = str(event.get_sender_id())
+            admin_qq = "1620592237"
+            
+            # 检查是否为管理员
+            if user_id != admin_qq:
+                yield event.plain_result("❌ 权限不足喵~")
+                return
+            
+            # 解析命令参数
+            message_str = event.message_str.strip()
+            parts = message_str.split()
+            
+            if len(parts) < 2:
+                yield event.plain_result("❌ 参数不足！正确格式：全体赔偿 金币数量")
+                return
+            
+            try:
+                compensation_amount = int(parts[1])
+                if compensation_amount <= 0:
+                    yield event.plain_result("❌ 赔偿金币数量必须大于0！")
+                    return
+            except ValueError:
+                yield event.plain_result("❌ 无效的金币数量！请输入正整数。")
+                return
+            
+            # 导入数据管理模块
+            from .core import data_manager
+            
+            # 确保数据已加载
+            if not data_manager.user_data:
+                data_manager.load_user_data()
+            
+            # 获取所有用户数据
+            user_list = []
+            total_users = 0
+            total_compensated = 0
+            
+            # 遍历所有有老婆的用户进行赔偿
+            for user_id_key in data_manager.global_wife_data.keys():
+                # 获取用户当前数据（如果不存在会自动创建）
+                user_data_obj = data_manager.get_user_data(user_id_key)
+                old_coins = user_data_obj["coins"]
+                new_coins = old_coins + compensation_amount
+                
+                # 更新用户金币
+                data_manager.update_user_data(user_id_key, coins=new_coins)
+                
+                # 获取用户昵称
+                wife_data = data_manager.get_user_wife_data(user_id_key)
+                nickname = wife_data[2] if wife_data and len(wife_data) > 2 else user_id_key
+                
+                user_list.append(f"{nickname}: {old_coins} + {compensation_amount} = {new_coins}")
+                total_users += 1
+                total_compensated += compensation_amount
+            
+            if total_users == 0:
+                yield event.plain_result("❌ 没有找到任何用户进行赔偿！")
+                return
+            
+            # 构建结果消息
+            result_msg = f"✅ 管理员全体赔偿执行完成！\n"
+            result_msg += f"💰 赔偿金额：{compensation_amount} 金币/人\n"
+            result_msg += f"👥 受益用户：{total_users} 人\n"
+            result_msg += f"💎 总计赔偿：{total_compensated} 金币\n\n"
+            result_msg += "【赔偿详情】\n"
+            
+            # 分页显示用户列表（避免消息过长）
+            max_users_per_page = 20
+            if len(user_list) <= max_users_per_page:
+                result_msg += "\n".join(user_list)
+                yield event.plain_result(result_msg)
+            else:
+                # 分页发送
+                for i in range(0, len(user_list), max_users_per_page):
+                    page_users = user_list[i:i + max_users_per_page]
+                    page_num = i // max_users_per_page + 1
+                    total_pages = (len(user_list) + max_users_per_page - 1) // max_users_per_page
+                    
+                    if i == 0:
+                        # 第一页包含头部信息
+                        page_msg = result_msg + f"【第{page_num}/{total_pages}页】\n" + "\n".join(page_users)
+                    else:
+                        # 后续页面只显示用户列表
+                        page_msg = f"【全体赔偿详情 - 第{page_num}/{total_pages}页】\n" + "\n".join(page_users)
+                    
+                    yield event.plain_result(page_msg)
+            
+        except Exception as e:
+            print(f"[管理员全体赔偿] 执行失败: {e}")
+            import traceback
+            traceback.print_exc()
+            yield event.plain_result(f"❌ 执行全体赔偿时发生错误: {str(e)}")
+
 
     def restore_pending_tasks(self):
         """恢复重启前未完成的定时任务"""
@@ -655,6 +755,7 @@ class WifePlugin(Star):
         from .core.work_system import process_work_completion
         return process_work_completion(user_id)
 
+
     def setup_daily_boss_refresh(self):
         """设置每日Boss刷新任务"""
         try:
@@ -691,6 +792,7 @@ class WifePlugin(Star):
             print(f"[世界Boss] 每日刷新回调执行失败: {e}")
             import traceback
             traceback.print_exc()
+
 
     async def terminate(self):
         """插件终止时的清理工作"""

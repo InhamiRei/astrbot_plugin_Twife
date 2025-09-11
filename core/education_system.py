@@ -2,11 +2,12 @@
 import random
 from datetime import datetime, timedelta
 from ..config.education import *
+from ..config.properties import get_property_study_bonus
 from . import data_manager
 from .data_manager import (
     study_status, work_status, offline_completed_studies, 
     load_study_status, load_work_status, save_study_status, save_work_status,
-    get_user_wife_data, update_user_wife_data
+    get_user_wife_data, update_user_wife_data, get_user_data
 )
 from ..utils.experience_utils import process_experience_gain
 from ..config.experience_config import get_exp_required_for_level
@@ -165,8 +166,17 @@ def process_study_completion(user_id: str):
         return None
     
     # 计算学习收益
-    knowledge_gain = hours * random.randint(15, 25)  # 每小时15-25学识
+    base_knowledge_gain = hours * random.randint(15, 25)  # 每小时15-25学识（基础）
     growth_gain = hours * random.randint(5, 10)      # 每小时5-10成长值
+    
+    # 应用房产学习加成到学识
+    user_data = get_user_data(user_id)
+    property_name = user_data.get("property", "桥洞下的破旧帐篷")
+    study_bonus = get_property_study_bonus(property_name)
+    
+    # 计算最终学识收益（基础学识 + 房产加成）
+    knowledge_gain = int(base_knowledge_gain * (1 + study_bonus / 100))
+    
     hunger_loss = min(30, hours * 3)                 # 每小时减少3饥饿值，最多30
     
     # 获取当前属性
@@ -219,7 +229,13 @@ def process_study_completion(user_id: str):
     
     result_message = f": {random.choice(completion_messages)}\n"
     result_message += f"📚 学习收获：\n"
-    result_message += f"💡 学识 +{knowledge_gain} ({current_knowledge} → {new_knowledge})\n"
+    
+    # 显示学识收益（包含房产加成信息）
+    if study_bonus > 0:
+        result_message += f"💡 学识 +{base_knowledge_gain} (+{knowledge_gain - base_knowledge_gain}房产加成) = {knowledge_gain} ({current_knowledge} → {new_knowledge})\n"
+        result_message += f"🏠 房产学习加成：+{study_bonus}%\n"
+    else:
+        result_message += f"💡 学识 +{knowledge_gain} ({current_knowledge} → {new_knowledge})\n"
     
     # 显示完整的成长值进度信息
     next_level_exp = get_exp_required_for_level(new_level + 1)

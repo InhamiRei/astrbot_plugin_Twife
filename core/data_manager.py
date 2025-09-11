@@ -587,6 +587,7 @@ def clear_prize_pool():
     save_prize_pool()
     print("奖池已清空")
 
+
 # 初始化所有数据
 def initialize_all_data():
     """初始化所有数据"""

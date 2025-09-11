@@ -52,6 +52,7 @@ class ShoppingHandler:
         # 计算总身价
         total_worth = property_value + furniture_value
 
+
         # 构建资产信息
         assets_message = f": {nickname}的资产信息\n"
         assets_message += f"💎 总身价：{total_worth}\n"
@@ -189,7 +190,8 @@ class ShoppingHandler:
         result_msg = f": {nickname}，一键出售战利品完成\n"
         result_msg += f"💰 基础总价：{base_total_value}金币\n"
         result_msg += f"🏠 房产加成：+{sell_bonus}% (+{total_bonus}金币)\n"
-        result_msg += f"💰 实际收入：{final_total_value}金币"
+        result_msg += f"💰 总收入：{final_total_value}金币"
+        result_msg += f"\n💎 实际到账：{final_total_value}金币"
         result_msg += f"\n💎 当前金币：{user_data_obj['coins']}"
         result_msg += "\n🏆 战利品列表："
         result_msg += "，".join(trophy_details)
