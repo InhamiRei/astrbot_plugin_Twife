@@ -189,6 +189,12 @@ def get_user_data(user_id: str):
                 "脚部": None,
                 "手持": None,
                 "饰品": None
+            },
+            "scratch_stats": {  # 咕咕嘎嘎统计数据
+                "total_count": 0,     # 总咕咕嘎嘎次数
+                "total_cost": 0,      # 总投入金额
+                "total_reward": 0,    # 总收益
+                "net_gain": 0         # 净收益（收益-投入）
             }
         }
         save_user_data()
@@ -217,10 +223,19 @@ def get_user_data(user_id: str):
             "饰品": None
         }
         save_user_data()
+        
+    if "scratch_stats" not in user_data[user_id]:
+        user_data[user_id]["scratch_stats"] = {
+            "total_count": 0,
+            "total_cost": 0,
+            "total_reward": 0,
+            "net_gain": 0
+        }
+        save_user_data()
     
     return user_data[user_id]
 
-def update_user_data(user_id: str, coins=None, backpack=None, property=None, furniture=None, trophies=None, wardrobe=None, equipment=None):
+def update_user_data(user_id: str, coins=None, backpack=None, property=None, furniture=None, trophies=None, wardrobe=None, equipment=None, scratch_stats=None):
     """更新用户数据"""
     user_data_obj = get_user_data(user_id)
     if coins is not None:
@@ -237,6 +252,20 @@ def update_user_data(user_id: str, coins=None, backpack=None, property=None, fur
         user_data_obj["wardrobe"] = wardrobe
     if equipment is not None:
         user_data_obj["equipment"] = equipment
+    if scratch_stats is not None:
+        user_data_obj["scratch_stats"] = scratch_stats
+    save_user_data()
+
+def update_scratch_stats(user_id: str, count_delta: int, cost_delta: int, reward_delta: int):
+    """更新用户咕咕嘎嘎统计数据"""
+    user_data_obj = get_user_data(user_id)
+    stats = user_data_obj["scratch_stats"]
+    
+    stats["total_count"] += count_delta
+    stats["total_cost"] += cost_delta
+    stats["total_reward"] += reward_delta
+    stats["net_gain"] = stats["total_reward"] - stats["total_cost"]
+    
     save_user_data()
 
 # === 每日限制数据管理 ===

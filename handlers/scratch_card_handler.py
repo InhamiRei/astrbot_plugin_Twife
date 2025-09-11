@@ -11,8 +11,8 @@ class ScratchCardHandler:
         # 普通奖励配置：(奖励金额, 权重, 描述)
         self.SCRATCH_REWARDS = [
             # 常规奖励（高概率）
-            (0, 2000, "谢谢惠顾"),
-            (20, 1000, "小奖"),
+            (0, 2500, "谢谢惠顾"),
+            (20, 2000, "小奖"),
             (50, 800, "小赚"),
             (100, 500, "回本"),
             (200, 300, "翻倍"),
@@ -291,6 +291,10 @@ class ScratchCardHandler:
         # 更新用户金币
         update_user_data(user_id, coins=final_coins)
         
+        # 更新咕咕嘎嘎统计数据
+        from ..core.data_manager import update_scratch_stats
+        update_scratch_stats(user_id, 1, self.SCRATCH_COST, reward_amount)
+        
         # 构建结果消息
         result_msg = self._build_result_message(nickname, reward_amount, description, current_coins, final_coins, prize_type)
         return result_msg
@@ -350,6 +354,10 @@ class ScratchCardHandler:
         # 更新用户金币
         final_coins = current_coins_working + total_reward
         update_user_data(user_id, coins=final_coins)
+        
+        # 更新咕咕嘎嘎统计数据
+        from ..core.data_manager import update_scratch_stats
+        update_scratch_stats(user_id, quantity, total_cost, total_reward)
         
         # 构建批量结果消息
         result_msg = self._build_batch_result_message(nickname, quantity, total_cost, total_reward, 

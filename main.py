@@ -42,6 +42,7 @@ from .handlers.dress_up_handler import DressUpHandler
 from .handlers.item_query_handler import ItemQueryHandler
 from .handlers.world_boss_handler import WorldBossHandler
 from .handlers.scratch_card_handler import ScratchCardHandler
+from .handlers.scratch_ranking_handler import ScratchRankingHandler
 
 @register(
     "astrbot_plugin_aw",
@@ -82,6 +83,7 @@ class WifePlugin(Star):
             self.item_query_handler = ItemQueryHandler()
             self.world_boss_handler = WorldBossHandler()
             self.scratch_card_handler = ScratchCardHandler()
+            self.scratch_ranking_handler = ScratchRankingHandler()
 
             # 初始化所有数据
             initialize_all_data()
@@ -169,6 +171,8 @@ class WifePlugin(Star):
             "攻击boss": self.world_boss_handler.attack_boss,
             
             # 咕咕嘎嘎命令（注意：长命令要放在短命令前面，避免匹配冲突）
+            "咕咕嘎嘎排行": self.scratch_ranking_handler.scratch_ranking,
+            "咕咕嘎嘎排名": self.scratch_ranking_handler.scratch_ranking,  # 别名
             "咕咕嘎嘎池": self.scratch_card_handler.prize_pool_query,
             "咕咕嘎嘎": self.scratch_card_handler.scratch_card,
             
@@ -277,7 +281,7 @@ class WifePlugin(Star):
 
             for command, func in self.commands.items():
                 # 精准匹配：消息必须完全等于命令，或者是带参数的命令
-                match_condition = message_str == command or (command in ["确认老婆", "牛老婆", "查老婆", "老婆详情", "赠送礼物", "出售物品", "购买物品", "出门学习", "出门打工", "购买家具", "出售家具", "家具中心-图片", "前往地下城", "一键出售战利品", "购买服装", "换衣", "脱下", "查询物品", "世界boss", "攻击boss", "咕咕嘎嘎", "咕咕嘎嘎池", "刷新boss", "全体赔偿"] and message_str.startswith(command))
+                match_condition = message_str == command or (command in ["确认老婆", "牛老婆", "查老婆", "老婆详情", "赠送礼物", "出售物品", "购买物品", "出门学习", "出门打工", "购买家具", "出售家具", "家具中心-图片", "前往地下城", "一键出售战利品", "购买服装", "换衣", "脱下", "查询物品", "世界boss", "攻击boss", "咕咕嘎嘎", "咕咕嘎嘎池", "咕咕嘎嘎排行", "咕咕嘎嘎排名", "刷新boss", "全体赔偿"] and message_str.startswith(command))
 
                 if match_condition:
                     # 正式群
@@ -361,8 +365,9 @@ class WifePlugin(Star):
         menu += "38. 攻击boss - 攻击世界Boss，造成伤害（消耗30健康值）\n"
         menu += "39. 咕咕嘎嘎 [数量] - 花费100金币试试运气，有机会获得咕咕嘎嘎池大奖（概率极低），可批量（如：咕咕嘎嘎 10）\n"
         menu += "40. 咕咕嘎嘎池 - 查看当前咕咕嘎嘎池状态和奖励说明\n"
-        menu += "41. 刷新boss [Boss名称] - 【管理员专用】刷新世界Boss和排行榜（可指定可可萝或大芋头王）\n"
-        menu += "42. 全体赔偿 金币数量 - 【管理员专用】给所有用户赔偿指定数量的金币\n"
+        menu += "41. 咕咕嘎嘎排行 - 查看全服咕咕嘎嘎排行榜，统计次数、投入、收益、净收益等数据\n"
+        menu += "42. 刷新boss [Boss名称] - 【管理员专用】刷新世界Boss和排行榜（可指定可可萝或大芋头王）\n"
+        menu += "43. 全体赔偿 金币数量 - 【管理员专用】给所有用户赔偿指定数量的金币\n"
         menu += "\n【系统特色】\n"
         menu += "🎮 完全重构的模块化架构\n"
         menu += "📊 老婆属性系统：等级、成长值、饥饿、清洁、健康、心情\n"
@@ -381,6 +386,7 @@ class WifePlugin(Star):
         menu += "👗 服装系统：五大精品套装、装备属性加成、套装效果\n"
         menu += "🐉 世界Boss系统：挑战黑化可可萝、获得珍贵料理道具、全服协作排行榜\n"
         menu += "🎫 咕咕嘎嘎系统：咕咕嘎嘎池模式运气游戏，支持批量操作（咕咕嘎嘎 数量），每次100金币进入咕咕嘎嘎池，三等奖(20%)、二等奖(50%)、一等奖(100%)等你来拿\n"
+        menu += "📈 咕咕嘎嘎排行榜：统计全服玩家咕咕嘎嘎数据，包含次数排行、投入排行、收益排行、净收益排行及全服统计摘要\n"
 
         yield event.plain_result(menu)
 
