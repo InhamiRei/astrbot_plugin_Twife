@@ -69,6 +69,12 @@ class TravelHandler:
                 yield event.plain_result(f"❌ 老婆正在{destination['country']}·{destination['city']}旅行中，请等待旅行结束！\n⏰ 预计返回时间：{end_time.strftime('%Y-%m-%d %H:%M:%S')}")
                 return
             
+            # 检查是否与学习或打工冲突
+            conflict_exists, conflict_message = self._check_travel_conflict(user_id)
+            if conflict_exists:
+                yield event.plain_result(f"❌ {conflict_message}")
+                return
+            
             # 解析命令参数
             message_str = event.message_str.strip()
             parts = message_str.split()
@@ -178,3 +184,52 @@ class TravelHandler:
             traceback.print_exc()
             yield event.plain_result(f"❌ 旅行时发生错误: {str(e)}")
     
+    def _check_travel_conflict(self, user_id: str):
+        """检查旅行是否与学习或打工冲突"""
+        # 确保数据已经加载（防止重启后数据未加载的问题）
+        if not data_manager.study_status and not data_manager.work_status:
+            print(f"[旅行系统] 检查冲突时发现数据未加载，重新初始化")
+            # 重新加载学习和工作状态数据
+            data_manager.load_study_status()
+            data_manager.load_work_status()
+        
+        print(f"[旅行系统] 检查冲突 - 用户ID: {user_id}")
+        
+        # 检查是否正在学习中
+        if user_id in data_manager.study_status and data_manager.study_status[user_id].get('is_studying', False):
+            study_data = data_manager.study_status[user_id]
+            end_time_str = study_data['end_time']
+            end_time = datetime.fromisoformat(end_time_str)
+            current_time = datetime.now()
+            remaining = end_time - current_time
+            
+            if remaining.total_seconds() > 0:
+                hours_left = int(remaining.total_seconds() // 3600)
+                minutes_left = int((remaining.total_seconds() % 3600) // 60)
+                return True, f"老婆正在学习中，还需要{hours_left}小时{minutes_left}分钟才能完成！不能同时进行旅行。"
+            else:
+                # 学习已过期，清除状态
+                print(f"[旅行系统] 用户 {user_id} 的学习已过期，清除状态")
+                del data_manager.study_status[user_id]
+                data_manager.save_study_status()
+        
+        # 检查是否正在打工中
+        if user_id in data_manager.work_status and data_manager.work_status[user_id].get('is_working', False):
+            work_data = data_manager.work_status[user_id]
+            end_time_str = work_data['end_time']
+            end_time = datetime.fromisoformat(end_time_str)
+            current_time = datetime.now()
+            remaining = end_time - current_time
+            
+            if remaining.total_seconds() > 0:
+                hours_left = int(remaining.total_seconds() // 3600)
+                minutes_left = int((remaining.total_seconds() % 3600) // 60)
+                return True, f"老婆正在打工中，还需要{hours_left}小时{minutes_left}分钟才能完成！不能同时进行旅行。"
+            else:
+                # 打工已过期，清除状态
+                print(f"[旅行系统] 用户 {user_id} 的打工已过期，清除状态")
+                del data_manager.work_status[user_id]
+                data_manager.save_work_status()
+        
+        print(f"[旅行系统] 无冲突，可以开始旅行")
+        return False, ""

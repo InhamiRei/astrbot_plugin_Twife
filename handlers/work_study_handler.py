@@ -51,6 +51,12 @@ class WorkStudyHandler:
         if conflict_exists:
             yield event.plain_result(f': {nickname}，{conflict_message}')
             return
+        
+        # 检查是否正在旅行中
+        travel_conflict_exists, travel_conflict_message = self._check_travel_conflict(user_id)
+        if travel_conflict_exists:
+            yield event.plain_result(f': {nickname}，{travel_conflict_message}')
+            return
 
         # 开始学习
         group_id = str(event.message_obj.group_id) if hasattr(event.message_obj, 'group_id') else None
@@ -228,6 +234,12 @@ class WorkStudyHandler:
                 del data_manager.study_status[user_id]
                 data_manager.save_study_status()
 
+        # 检查是否正在旅行中
+        travel_conflict_exists, travel_conflict_message = self._check_travel_conflict(user_id)
+        if travel_conflict_exists:
+            yield event.plain_result(f': {nickname}，{travel_conflict_message}')
+            return
+
         # 检查是否已经在打工中
         if user_id in data_manager.work_status and data_manager.work_status[user_id].get('is_working', False):
             end_time_str = data_manager.work_status[user_id]['end_time']
@@ -301,3 +313,44 @@ class WorkStudyHandler:
         result_message += f'🕐 预计完成时间：{end_time.strftime("%H:%M")}\n'
         
         yield event.plain_result(result_message)
+    
+    def _check_travel_conflict(self, user_id: str):
+        """检查是否与旅行冲突"""
+        # 确保数据已经加载（防止重启后数据未加载的问题）
+        if not data_manager.travel_status:
+            print(f"[工作学习系统] 检查旅行冲突时发现数据未加载，重新初始化")
+            # 重新加载旅行状态数据
+            data_manager.load_travel_status()
+        
+        print(f"[工作学习系统] 检查旅行冲突 - 用户ID: {user_id}")
+        
+        # 检查是否正在旅行中
+        if user_id in data_manager.travel_status and data_manager.travel_status[user_id].get('is_traveling', False):
+            travel_data = data_manager.travel_status[user_id]
+            end_time_str = travel_data['end_time']
+            end_time = datetime.fromisoformat(end_time_str)
+            current_time = datetime.now()
+            remaining = end_time - current_time
+            
+            if remaining.total_seconds() > 0:
+                hours_left = int(remaining.total_seconds() // 3600)
+                minutes_left = int((remaining.total_seconds() % 3600) // 60)
+                
+                # 获取旅行目的地信息
+                from ..config.travel_config import TRAVEL_DESTINATIONS
+                destination_index = travel_data['destination_index']
+                if destination_index in TRAVEL_DESTINATIONS:
+                    destination = TRAVEL_DESTINATIONS[destination_index]
+                    location = f"{destination['country']}·{destination['city']}"
+                else:
+                    location = "未知地点"
+                
+                return True, f"老婆正在{location}旅行中，还需要{hours_left}小时{minutes_left}分钟才能返回！不能同时进行学习或打工。"
+            else:
+                # 旅行已过期，清除状态
+                print(f"[工作学习系统] 用户 {user_id} 的旅行已过期，清除状态")
+                del data_manager.travel_status[user_id]
+                data_manager.save_travel_status()
+        
+        print(f"[工作学习系统] 无旅行冲突")
+        return False, ""
