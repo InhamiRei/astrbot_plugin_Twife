@@ -1,6 +1,15 @@
 """格式化工具模块"""
 from ..config.experience_config import get_exp_required_for_level
 
+def format_number(number: int | float) -> str:
+    """格式化数字显示，添加千位分隔符"""
+    if isinstance(number, float):
+        # 如果是浮点数，保留2位小数并添加千位分隔符
+        return f"{number:,.2f}"
+    else:
+        # 如果是整数，只添加千位分隔符
+        return f"{number:,}"
+
 def format_backpack(backpack: dict) -> str:
     """格式化背包显示"""
     if not backpack:
@@ -8,6 +17,18 @@ def format_backpack(backpack: dict) -> str:
     items = []
     for item, count in backpack.items():
         items.append(f"{item}x{count}")
+    return "、".join(items)
+
+def format_artifacts(artifacts: dict) -> str:
+    """格式化历史文物显示"""
+    if not artifacts:
+        return "暂无"
+    items = []
+    for artifact, count in artifacts.items():
+        if count > 1:
+            items.append(f"{artifact}x{count}")
+        else:
+            items.append(artifact)
     return "、".join(items)
 
 def get_status_emoji(value: int) -> str:

@@ -5,7 +5,9 @@ from ..core.data_manager import *
 from ..config.settings import SUPERMARKET_ITEMS, FASTFOOD_ITEMS, CANGYINGGUANZI_ITEMS
 from ..config.events import GO_OUT_COIN_EVENTS
 from ..config.messages import get_affection_status
-from ..utils.formatters import format_backpack
+from ..config.travel_config import FRAGMENT_CONVERSION, SOUVENIRS
+from ..utils.formatters import format_backpack, format_artifacts
+from .fragment_handler import fragment_handler
 
 class ShoppingHandler:
     def __init__(self):
@@ -28,6 +30,8 @@ class ShoppingHandler:
         property_name = user_data_obj["property"]
         furniture_inventory = user_data_obj["furniture"]
         wardrobe = user_data_obj.get("wardrobe", {})
+        artifacts = user_data_obj.get("artifacts", {})
+        artifacts_str = format_artifacts(artifacts)
         
         # 获取房产信息
         from ..config.properties import get_property_value, get_property_space, get_property_sell_bonus, PROPERTY_LEVELS
@@ -68,7 +72,8 @@ class ShoppingHandler:
         # assets_message += f"🏭 公司/商铺/矿产/地皮/岛屿：暂无\n"
         assets_message += f"🎒 背包：{backpack_str}\n"
         assets_message += f"🏆 战利品：{trophies_str}\n"
-        assets_message += f"👗 衣柜：{self.format_wardrobe(wardrobe)}"
+        assets_message += f"👗 衣柜：{self.format_wardrobe(wardrobe)}\n"
+        assets_message += f"🏛️ 历史文物：{artifacts_str}"
         if user_data_obj["trophies"]:  # 如果有战利品，提示可以一键出售
             assets_message += f"\n💡 提示：使用\"一键出售战利品\"命令可快速出售所有战利品"
 
@@ -323,9 +328,6 @@ class ShoppingHandler:
                 if quantity <= 0:
                     yield event.plain_result(f': {nickname}，赠送数量必须大于0')
                     return
-                if quantity > 99:
-                    yield event.plain_result(f': {nickname}，一次最多只能赠送99个物品')
-                    return
             except ValueError:
                 yield event.plain_result(f': {nickname}，请输入有效的数量')
                 return
@@ -351,7 +353,106 @@ class ShoppingHandler:
             yield event.plain_result(f': {nickname}，你的背包中只有{available_quantity}个{item_name}，无法赠送{quantity}个。')
             return
             
-        # 检查物品是否在配置中
+        # 检查是否为碎片类型物品
+        is_fragment = False
+        fragment_type = None
+        for frag_type, frag_config in FRAGMENT_CONVERSION.items():
+            if item_name == frag_config["name"]:
+                is_fragment = True
+                fragment_type = frag_type
+                break
+        
+        # 根据物品类型设置数量限制
+        if is_fragment:
+            # 碎片类物品允许更高的数量限制（最多1000个）
+            if quantity > 1000:
+                yield event.plain_result(f': {nickname}，一次最多只能赠送1000个{item_name}')
+                return
+        else:
+            # 普通物品保持99个的限制
+            if quantity > 99:
+                yield event.plain_result(f': {nickname}，一次最多只能赠送99个物品')
+                return
+        
+        # 检查是否为纪念品伴手礼
+        is_souvenir = False
+        souvenir_info = None
+        for country, souvenirs in SOUVENIRS.items():
+            for souvenir in souvenirs:
+                if item_name == souvenir["name"]:
+                    is_souvenir = True
+                    souvenir_info = souvenir
+                    break
+            if is_souvenir:
+                break
+        
+        # 处理碎片类型物品
+        if is_fragment:
+            # 碎片必须满100个才能使用
+            if quantity < 100:
+                yield event.plain_result(f': {nickname}，{item_name}需要满100个才能赠送给老婆提升属性！当前数量：{available_quantity}')
+                return
+            if quantity % 100 != 0:
+                yield event.plain_result(f': {nickname}，{item_name}的使用数量必须是100的倍数！')
+                return
+            
+            # 使用碎片处理器
+            success, result = fragment_handler.use_fragments(user_id, fragment_type, quantity)
+            if not success:
+                yield event.plain_result(f': {nickname}，使用{item_name}失败：{result}')
+                return
+            
+            # 构建碎片使用结果消息
+            wife_name = wife_data[0]
+            wife_display_name = wife_name.split('.')[0]
+            
+            result_message = f': {nickname}，你使用了{quantity}个{item_name}为{wife_display_name}提升属性！\n'
+            result_message += f'💫 {wife_display_name}：感受到了神秘力量的注入，身体发生了微妙的变化...\n'
+            
+            for attr_name, attr_value in result["attribute_increases"].items():
+                if attr_name == "charm_contrast":
+                    result_message += f'✨ 反差萌 +{attr_value}点\n'
+                elif attr_name == "blackening":
+                    result_message += f'🖤 黑化率 +{attr_value}点\n'
+            
+            result_message += f'📦 剩余{item_name}：{result["remaining_fragments"]}个'
+            
+            yield event.plain_result(result_message)
+            return
+        
+        # 处理纪念品伴手礼
+        elif is_souvenir:
+            # 直接从背包中移除物品
+            backpack[item_name] -= quantity
+            if backpack[item_name] <= 0:
+                del backpack[item_name]
+            
+            # 应用纪念品效果
+            wife_name = wife_data[0]
+            wife_display_name = wife_name.split('.')[0]
+            current_mood = wife_data[10] if len(wife_data) > 10 else 100
+            
+            # 计算属性变化
+            total_mood_gain = souvenir_info["effects"].get("mood", 0) * quantity
+            new_mood = max(0, min(1000, current_mood + total_mood_gain))
+            
+            # 更新数据
+            update_user_data(user_id, backpack=backpack)
+            update_user_wife_data(user_id, mood=new_mood)
+            
+            # 构建纪念品使用结果消息
+            result_message = f': {nickname}，你向{wife_display_name}赠送了{item_name} x{quantity}\n'
+            result_message += f'🎁 {souvenir_info["description"]}\n'
+            result_message += f'💝 {wife_display_name}：这是从旅行中带回来的珍贵纪念品呢！谢谢你！\n'
+            result_message += f'😊 心情：{current_mood} → {new_mood} (+{total_mood_gain})\n'
+            
+            # 注释：纪念品只影响心情值，其他效果只是装饰性描述
+            # 不再显示虚假的属性变化，因为老婆系统中没有这些属性
+            
+            yield event.plain_result(result_message)
+            return
+        
+        # 检查物品是否在配置中（普通物品）
         if item_name not in ITEMS_DATA:
             yield event.plain_result(f': {nickname}，找不到物品{item_name}的信息，无法赠送。')
             return
@@ -489,6 +590,39 @@ class ShoppingHandler:
         # 检查背包中是否有该物品
         if item_name not in backpack or backpack[item_name] <= 0:
             yield event.plain_result(f': {nickname}，你的背包中没有{item_name}，无法出售。')
+            return
+        
+        # 检查是否为历史文物（历史文物无法出售）
+        from ..config.travel_config import MUSEUMS
+        is_artifact = False
+        for country, museum_info in MUSEUMS.items():
+            if item_name in museum_info["artifacts_accepted"]:
+                is_artifact = True
+                break
+        
+        if is_artifact:
+            yield event.plain_result(f': {nickname}，{item_name}是珍贵的历史文物，无法出售！你可以将其捐赠给博物馆获得更丰厚的奖励。')
+            return
+        
+        # 检查是否为碎片（碎片也无法直接出售，只能通过赠送礼物使用）
+        from ..config.travel_config import FRAGMENT_CONVERSION, SOUVENIRS
+        for frag_type, frag_config in FRAGMENT_CONVERSION.items():
+            if item_name == frag_config["name"]:
+                yield event.plain_result(f': {nickname}，{item_name}无法直接出售！你可以通过「赠送礼物 {item_name} 100」来使用它提升老婆属性。')
+                return
+        
+        # 检查是否为纪念品（纪念品无法出售，具有纪念价值）
+        is_souvenir = False
+        for city, souvenirs in SOUVENIRS.items():
+            for souvenir in souvenirs:
+                if item_name == souvenir["name"]:
+                    is_souvenir = True
+                    break
+            if is_souvenir:
+                break
+        
+        if is_souvenir:
+            yield event.plain_result(f': {nickname}，{item_name}是珍贵的旅行纪念品，具有特殊的纪念价值，无法出售！你可以通过「赠送礼物」给老婆使用。')
             return
             
         # 检查物品是否在配置中

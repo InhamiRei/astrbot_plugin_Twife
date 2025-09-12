@@ -22,6 +22,7 @@ from .core.wife_system import *
 from .core.ntr_system import *
 from .core.education_system import *
 from .core.work_system import *
+from .core.travel_system import *
 
 # 导入工具模块
 from .utils.formatters import *
@@ -43,6 +44,8 @@ from .handlers.item_query_handler import ItemQueryHandler
 from .handlers.world_boss_handler import WorldBossHandler
 from .handlers.scratch_card_handler import ScratchCardHandler
 from .handlers.scratch_ranking_handler import ScratchRankingHandler
+from .handlers.travel_handler import TravelHandler
+from .handlers.museum_handler import MuseumHandler
 
 @register(
     "astrbot_plugin_aw",
@@ -84,6 +87,8 @@ class WifePlugin(Star):
             self.world_boss_handler = WorldBossHandler()
             self.scratch_card_handler = ScratchCardHandler()
             self.scratch_ranking_handler = ScratchRankingHandler()
+            self.travel_handler = TravelHandler()
+            self.museum_handler = MuseumHandler()
 
             # 初始化所有数据
             initialize_all_data()
@@ -176,6 +181,15 @@ class WifePlugin(Star):
             "咕咕嘎嘎池": self.scratch_card_handler.prize_pool_query,
             "咕咕嘎嘎": self.scratch_card_handler.scratch_card,
             
+            # 旅行系统命令
+            "旅行列表": self.travel_handler.travel_list,
+            "出门旅行": self.travel_handler.go_travel,
+            
+            # 博物馆系统命令
+            "博物馆列表": self.museum_handler.museum_list,
+            "捐赠文物": self.museum_handler.donate_artifact,
+            "我的捐赠记录": self.museum_handler.my_donations,
+            
             # 管理员命令
             "刷新boss": self.admin_refresh_boss,
             "全体赔偿": self.admin_global_compensation,
@@ -213,6 +227,9 @@ class WifePlugin(Star):
 
             # 检查过期的打工任务
             check_and_process_expired_works()
+            
+            # 检查过期的旅行任务
+            check_and_process_completed_travels()
         except Exception as e:
             print(f"检查过期任务时出错: {e}")
 
@@ -276,12 +293,23 @@ class WifePlugin(Star):
                         yield event.plain_result(offline_work['message'])
                         del offline_completed_works[user_id]
 
+            # 发送离线完成的旅行通知（兜底机制）
+            if offline_completed_travels:
+                current_group_id = str(event.message_obj.group_id)
+                user_id = str(event.get_sender_id())
+
+                if user_id in offline_completed_travels:
+                    offline_travel = offline_completed_travels[user_id]
+                    if offline_travel['group_id'] == current_group_id:
+                        yield event.plain_result(offline_travel['message'])
+                        del offline_completed_travels[user_id]
+
             group_id = event.message_obj.group_id
             message_str = event.message_str.strip()
 
             for command, func in self.commands.items():
                 # 精准匹配：消息必须完全等于命令，或者是带参数的命令
-                match_condition = message_str == command or (command in ["确认老婆", "牛老婆", "查老婆", "老婆详情", "赠送礼物", "出售物品", "购买物品", "出门学习", "出门打工", "购买家具", "出售家具", "家具中心-图片", "前往地下城", "一键出售战利品", "购买服装", "换衣", "脱下", "查询物品", "世界boss", "攻击boss", "咕咕嘎嘎", "咕咕嘎嘎池", "咕咕嘎嘎排行", "咕咕嘎嘎排名", "刷新boss", "全体赔偿"] and message_str.startswith(command))
+                match_condition = message_str == command or (command in ["确认老婆", "牛老婆", "查老婆", "老婆详情", "赠送礼物", "出售物品", "购买物品", "出门学习", "出门打工", "购买家具", "出售家具", "家具中心-图片", "前往地下城", "一键出售战利品", "购买服装", "换衣", "脱下", "查询物品", "世界boss", "攻击boss", "咕咕嘎嘎", "咕咕嘎嘎池", "咕咕嘎嘎排行", "咕咕嘎嘎排名", "出门旅行", "捐赠文物", "刷新boss", "全体赔偿"] and message_str.startswith(command))
 
                 if match_condition:
                     # 正式群
@@ -366,8 +394,13 @@ class WifePlugin(Star):
         menu += "39. 咕咕嘎嘎 [数量] - 花费100金币试试运气，有机会获得咕咕嘎嘎池大奖（概率极低），可批量（如：咕咕嘎嘎 10）\n"
         menu += "40. 咕咕嘎嘎池 - 查看当前咕咕嘎嘎池状态和奖励说明\n"
         menu += "41. 咕咕嘎嘎排行 - 查看全服咕咕嘎嘎排行榜，统计次数、投入、收益、净收益等数据\n"
-        menu += "42. 刷新boss [Boss名称] - 【管理员专用】刷新世界Boss和排行榜（可指定可可萝或大芋头王）\n"
-        menu += "43. 全体赔偿 金币数量 - 【管理员专用】给所有用户赔偿指定数量的金币\n"
+        menu += "42. 旅行列表 - 查看全世界可以旅行的地点，包含中国、日本、缅甸等地\n"
+        menu += "43. 出门旅行 序号 - 前往指定地点旅行，获得碎片、纪念品和历史文物\n"
+        menu += "44. 博物馆列表 - 查看各国博物馆和玩家捐赠记录\n"
+        menu += "45. 捐赠文物 文物名称 - 将历史文物捐赠给博物馆，获得丰厚奖励\n"
+        menu += "46. 我的捐赠记录 - 查看个人的文物捐赠历史和成就\n"
+        menu += "47. 刷新boss [Boss名称] - 【管理员专用】刷新世界Boss和排行榜（可指定可可萝或大芋头王）\n"
+        menu += "48. 全体赔偿 金币数量 - 【管理员专用】给所有用户赔偿指定数量的金币\n"
         menu += "\n【系统特色】\n"
         menu += "🎮 完全重构的模块化架构\n"
         menu += "📊 老婆属性系统：等级、成长值、饥饿、清洁、健康、心情\n"
@@ -387,6 +420,9 @@ class WifePlugin(Star):
         menu += "🐉 世界Boss系统：挑战黑化可可萝、获得珍贵料理道具、全服协作排行榜\n"
         menu += "🎫 咕咕嘎嘎系统：咕咕嘎嘎池模式运气游戏，支持批量操作（咕咕嘎嘎 数量），每次100金币进入咕咕嘎嘎池，三等奖(20%)、二等奖(50%)、一等奖(100%)等你来拿\n"
         menu += "📈 咕咕嘎嘎排行榜：统计全服玩家咕咕嘎嘎数据，包含次数排行、投入排行、收益排行、净收益排行及全服统计摘要\n"
+        menu += "✈️ 世界旅行系统：前往中国、日本、缅甸等地旅行，体验当地文化，获得反差萌碎片、黑化率碎片和珍贵纪念品\n"
+        menu += "🏛️ 博物馆系统：收集历史文物并捐赠给各国博物馆，获得丰厚奖励和永久声望记录\n"
+        menu += "✨ 碎片系统：收集100个碎片可提升老婆特殊属性，反差萌碎片提升反差萌，黑化率碎片提升黑化率\n"
 
         yield event.plain_result(menu)
 
@@ -572,6 +608,7 @@ class WifePlugin(Star):
             from .core import data_manager
             print(f"[任务恢复] 学习状态数据: {len(data_manager.study_status)} 个")
             print(f"[任务恢复] 打工状态数据: {len(data_manager.work_status)} 个")
+            print(f"[任务恢复] 旅行状态数据: {len(data_manager.travel_status)} 个")
             
             # 恢复学习任务
             expired_studies = []
@@ -629,6 +666,34 @@ class WifePlugin(Star):
                     except Exception as e:
                         print(f"[任务恢复] 恢复打工任务失败 用户{user_id}: {e}")
             
+            # 恢复旅行任务
+            expired_travels = []
+            for user_id, travel_data in data_manager.travel_status.items():
+                if travel_data.get('is_traveling', False):
+                    try:
+                        end_time = datetime.fromisoformat(travel_data['end_time'])
+                        print(f"[任务恢复] 旅行任务 用户{user_id}: 结束时间 {end_time}")
+                        
+                        if current_time < end_time:
+                            # 任务还未完成，重新安排通知
+                            job_id = f"travel_{user_id}"
+                            self.scheduler.add_job(
+                                self._task_completion_callback,
+                                "date",
+                                id=job_id,
+                                args=[user_id, "travel"],
+                                run_date=end_time,
+                                misfire_grace_time=60,
+                            )
+                            print(f"[任务恢复] 恢复旅行任务通知: 用户{user_id}, 完成时间: {end_time}")
+                        else:
+                            # 任务已过期，标记为需要立即处理
+                            expired_travels.append(user_id)
+                            print(f"[任务恢复] 旅行任务已过期: 用户{user_id}, 过期时间: {end_time}")
+                            
+                    except Exception as e:
+                        print(f"[任务恢复] 恢复旅行任务失败 用户{user_id}: {e}")
+            
             # 立即处理过期的任务
             if expired_studies:
                 print(f"[任务恢复] 立即处理 {len(expired_studies)} 个过期学习任务")
@@ -650,6 +715,18 @@ class WifePlugin(Star):
                         self._task_completion_callback,
                         "date",
                         args=[user_id, "work"],
+                        run_date=current_time + timedelta(seconds=5),
+                        misfire_grace_time=60,
+                    )
+                    
+            if expired_travels:
+                print(f"[任务恢复] 立即处理 {len(expired_travels)} 个过期旅行任务")
+                for user_id in expired_travels:
+                    # 安排在5秒后执行，避免启动时立即执行导致的问题
+                    self.scheduler.add_job(
+                        self._task_completion_callback,
+                        "date",
+                        args=[user_id, "travel"],
                         run_date=current_time + timedelta(seconds=5),
                         misfire_grace_time=60,
                     )
@@ -693,58 +770,79 @@ class WifePlugin(Star):
                 # 处理打工完成
                 result = self._process_work_completion_with_message(user_id)
                 print(f"[回调函数] 打工完成处理结果: {result is not None}")
+            elif task_type == "travel":
+                # 处理旅行完成
+                result = self._process_travel_completion_with_message(user_id)
+                print(f"[回调函数] 旅行完成处理结果: {result is not None}")
             else:
                 print(f"[回调函数] 未知任务类型: {task_type}")
                 return
                 
-            if result and result.get('group_id') and result.get('message'):
-                group_id = result['group_id']
-                print(f"[回调函数] 准备发送消息到群组: {group_id}")
+            if result and result.get('unified_msg_origin') and result.get('message'):
+                unified_msg_origin = result['unified_msg_origin']
+                print(f"[回调函数] 准备发送消息到: {unified_msg_origin}")
                 
-                # 使用正确的 unified_msg_origin 格式: platform_name:message_type:session_id
-                possible_origins = [
-                    f"aiocqhttp:GroupMessage:{group_id}",  # 正确格式
-                    f"aiocqhttp:group:{group_id}",  # 备用格式1
-                    f"aiocqhttp_group_{group_id}",  # 备用格式2
-                    group_id  # 直接使用群组ID作为最后备选
-                ]
-                
-                success = False
-                for unified_msg_origin in possible_origins:
-                    try:
-                        print(f"[回调函数] 尝试发送到: {unified_msg_origin}")
-                        # 构建包含@功能的消息
-                        # result['message'] 格式类似 ": Hey 、小怪兽，..."
-                        if result['message'].startswith(': '):
-                            # 检查用户是否在不艾特列表中
-                            if user_id in data_manager.no_at_users:
-                                # 不艾特该用户，直接发送消息内容
-                                print(f"[回调函数] 用户{user_id}在不艾特列表中，跳过@功能")
-                                message_result = MessageEventResult().message(result['message'][2:])  # 去掉开头的": "
-                            else:
-                                # 构建@消息
-                                if task_type == "study":
-                                    user_info = data_manager.study_status.get(user_id, {})
-                                else:  # task_type == "work"
-                                    user_info = data_manager.work_status.get(user_id, {})
-                                user_nickname = user_info.get('nickname', user_id)
-                                message_result = MessageEventResult().at(name=user_nickname, qq=user_id).message(" " + result['message'][2:])  # 去掉开头的": "并添加空格
+                try:
+                    # 构建包含@功能的消息
+                    # result['message'] 格式类似 ": Hey 、小怪兽，..."
+                    if result['message'].startswith(': '):
+                        # 检查用户是否在不艾特列表中
+                        if user_id in data_manager.no_at_users:
+                            # 不艾特该用户，直接发送消息内容
+                            print(f"[回调函数] 用户{user_id}在不艾特列表中，跳过@功能")
+                            message_result = MessageEventResult().message(result['message'][2:])  # 去掉开头的": "
                         else:
-                            message_result = MessageEventResult().message(result['message'])
+                            # 构建@消息
+                            user_nickname = result.get('nickname', '用户')
+                            message_result = MessageEventResult().at(name=user_nickname, qq=user_id).message(" " + result['message'][2:])  # 去掉开头的": "并添加空格
+                    else:
+                        message_result = MessageEventResult().message(result['message'])
+                    
+                    await self.context.send_message(unified_msg_origin, message_result)
+                    print(f"[回调函数] 成功发送{task_type}完成通知到: {unified_msg_origin}")
+                    
+                except Exception as send_error:
+                    import traceback
+                    error_type = type(send_error).__name__
+                    print(f"[回调函数] 发送失败到 {unified_msg_origin}: {error_type}: {send_error}")
+                    
+                    # 如果是API不可用，提供友好提示
+                    if error_type == "ApiNotAvailable":
+                        print(f"[回调函数] ❌ QQ机器人API连接不可用，可能原因：")
+                        print(f"[回调函数]   1. 机器人连接断开")
+                        print(f"[回调函数]   2. 网络连接问题")
+                        print(f"[回调函数]   3. 群组权限不足")
+                        print(f"[回调函数]   4. 服务暂时不可用")
+                        print(f"[回调函数] 💡 建议：检查机器人连接状态，稍后重试")
+                    else:
+                        print(f"[回调函数] 详细错误: {traceback.format_exc()}")
+                    
+                    print(f"[回调函数] 消息内容: {result['message'][:100]}...")
+                    
+                    # 尝试备用格式（仅在非API不可用错误时）
+                    if error_type != "ApiNotAvailable":
+                        group_id = result.get('group_id')
+                        if group_id:
+                            backup_origin = f"aiocqhttp:GroupMessage:{group_id}"
+                            try:
+                                await self.context.send_message(backup_origin, message_result)
+                                print(f"[回调函数] 备用格式发送成功: {backup_origin}")
+                            except Exception as backup_error:
+                                print(f"[回调函数] 备用格式也发送失败: {type(backup_error).__name__}: {backup_error}")
+                    else:
+                        print(f"[回调函数] 跳过备用格式尝试（API不可用）")
                         
-                        await self.context.send_message(unified_msg_origin, message_result)
-                        print(f"[回调函数] 成功发送{task_type}完成通知到群组{group_id} (格式: {unified_msg_origin})")
-                        success = True
-                        break
-                    except Exception as send_error:
-                        print(f"[回调函数] 发送失败 (格式: {unified_msg_origin}): {send_error}")
-                        continue
-                
-                if not success:
-                    print(f"[回调函数] 所有格式都发送失败，群组ID: {group_id}")
+                    # 将消息存储到离线通知队列作为兜底
+                    print(f"[回调函数] 将消息加入离线通知队列作为兜底机制")
+                    if task_type == "study":
+                        data_manager.offline_completed_studies[user_id] = result
+                    elif task_type == "work":
+                        data_manager.offline_completed_works[user_id] = result
+                    elif task_type == "travel":
+                        data_manager.offline_completed_travels[user_id] = result
                     
             else:
-                print(f"[回调函数] 结果无效: result={result is not None}, group_id={result.get('group_id') if result else None}")
+                print(f"[回调函数] 结果无效: result={result is not None}, unified_msg_origin={result.get('unified_msg_origin') if result else None}")
             
         except Exception as e:
             import traceback
@@ -760,6 +858,11 @@ class WifePlugin(Star):
         """处理打工完成并返回消息"""  
         from .core.work_system import process_work_completion
         return process_work_completion(user_id)
+
+    def _process_travel_completion_with_message(self, user_id: str):
+        """处理旅行完成并返回消息"""
+        from .core.travel_system import process_travel_completion
+        return process_travel_completion(user_id)
 
 
     def setup_daily_boss_refresh(self):

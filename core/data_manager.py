@@ -10,6 +10,7 @@ user_data = {}
 daily_limits = {}
 study_status = {}
 work_status = {}
+travel_status = {}  # 存储用户旅行状态
 ITEMS_DATA = {}
 WORK_LIST = []
 dungeon_data = {}  # 存储用户地下城数据
@@ -18,6 +19,7 @@ no_at_users = []  # 不希望被@艾特的用户列表
 # 缓存变量
 offline_completed_studies = {}
 offline_completed_works = {}
+offline_completed_travels = {}
 candidate_wives = {}
 animewife_cooldown = {}
 ntr_feast_active = {}
@@ -25,6 +27,7 @@ newly_acquired_wives = {}
 
 # 插件实例引用，用于访问调度器
 wife_plugin_instance = None
+
 
 def get_today():
     """获取上海时区当日日期"""
@@ -99,6 +102,11 @@ def get_user_wife_data(user_id: str):
     if not global_wife_data:
         load_global_wife_data()
     return global_wife_data.get(str(user_id))
+
+def has_wife(user_id: str) -> bool:
+    """检查用户是否拥有老婆"""
+    wife_data = get_user_wife_data(user_id)
+    return wife_data is not None
 
 def set_user_wife_data(user_id: str, wife_name: str, nickname: str, purelove=False, affection=0, level=1, growth=0, hunger=1000, cleanliness=1000, health=1000, mood=1000, status="正常", education_level="幼儿园", knowledge=0, moe_value=0, spoil_value=0, tsundere_value=0, dark_rate=0, contrast_cute=0):
     """设置用户老婆数据"""
@@ -181,6 +189,7 @@ def get_user_data(user_id: str):
             "furniture": {},  # 家具库存
             "trophies": {},  # 战利品（地下城掉落）
             "wardrobe": {},  # 衣柜（存放服装）
+            "artifacts": {},  # 历史文物专用存储
             "equipment": {  # 当前装备
                 "头部": None,
                 "身体": None,
@@ -235,7 +244,7 @@ def get_user_data(user_id: str):
     
     return user_data[user_id]
 
-def update_user_data(user_id: str, coins=None, backpack=None, property=None, furniture=None, trophies=None, wardrobe=None, equipment=None, scratch_stats=None):
+def update_user_data(user_id: str, coins=None, backpack=None, property=None, furniture=None, trophies=None, wardrobe=None, equipment=None, artifacts=None, scratch_stats=None):
     """更新用户数据"""
     user_data_obj = get_user_data(user_id)
     if coins is not None:
@@ -252,9 +261,40 @@ def update_user_data(user_id: str, coins=None, backpack=None, property=None, fur
         user_data_obj["wardrobe"] = wardrobe
     if equipment is not None:
         user_data_obj["equipment"] = equipment
+    if artifacts is not None:
+        user_data_obj["artifacts"] = artifacts
     if scratch_stats is not None:
         user_data_obj["scratch_stats"] = scratch_stats
     save_user_data()
+
+def add_item_to_backpack(user_id: str, item_name: str, quantity: int):
+    """向用户背包添加物品"""
+    user_data_obj = get_user_data(user_id)
+    backpack = user_data_obj["backpack"]
+    
+    # 如果物品已存在，增加数量；否则创建新条目
+    if item_name in backpack:
+        backpack[item_name] += quantity
+    else:
+        backpack[item_name] = quantity
+    
+    # 保存更新
+    update_user_data(user_id, backpack=backpack)
+
+def add_artifact(user_id: str, artifact_name: str, quantity: int = 1):
+    """向用户历史文物库添加文物"""
+    user_data_obj = get_user_data(user_id)
+    artifacts = user_data_obj.get("artifacts", {})
+    
+    # 如果文物已存在，增加数量；否则创建新条目
+    if artifact_name in artifacts:
+        artifacts[artifact_name] += quantity
+    else:
+        artifacts[artifact_name] = quantity
+    
+    # 保存更新
+    update_user_data(user_id, artifacts=artifacts)
+    print(f"[历史文物] 为用户 {user_id} 添加文物：{artifact_name} x{quantity}")
 
 def update_scratch_stats(user_id: str, count_delta: int, cost_delta: int, reward_delta: int):
     """更新用户咕咕嘎嘎统计数据"""
@@ -384,6 +424,28 @@ def save_work_status():
     """保存打工状态数据"""
     with open(WORK_STATUS_FILE, 'w', encoding='utf-8') as f:
         json.dump(work_status, f, ensure_ascii=False, indent=4)
+
+# === 旅行状态数据管理 ===
+def load_travel_status():
+    """载入旅行状态数据"""
+    global travel_status
+    print(f"加载旅行状态文件: {TRAVEL_STATUS_FILE}")
+    if not os.path.exists(TRAVEL_STATUS_FILE):
+        print("旅行状态文件不存在，创建空文件")
+        with open(TRAVEL_STATUS_FILE, 'w', encoding='utf-8') as f:
+            json.dump({}, f, ensure_ascii=False, indent=4)
+        travel_status = {}
+    else:
+        print("旅行状态文件存在，开始读取")
+        with open(TRAVEL_STATUS_FILE, 'r', encoding='utf-8') as f:
+            travel_status = json.load(f)
+        print(f"成功加载旅行状态，数量: {len(travel_status)}")
+        print(f"旅行状态内容: {travel_status}")
+
+def save_travel_status():
+    """保存旅行状态数据"""
+    with open(TRAVEL_STATUS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(travel_status, f, ensure_ascii=False, indent=4)
 
 # === 配置数据管理 ===
 def load_items_config():
@@ -627,6 +689,7 @@ def initialize_all_data():
     load_daily_limits()
     load_study_status()
     load_work_status()
+    load_travel_status()
     load_dungeon_data()
     load_no_at_users()
     load_prize_pool()

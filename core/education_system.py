@@ -254,8 +254,11 @@ def process_study_completion(user_id: str):
         result_message += f"😰 她看起来有点饿了，记得给她准备点食物哦~"
     
     return {
+        'message': result_message,
         'group_id': group_id,
-        'message': result_message
+        'unified_msg_origin': study_data.get('unified_msg_origin', f"aiocqhttp:GroupMessage:{group_id}"),
+        'user_id': user_id,
+        'nickname': nickname
     }
 
 def check_and_process_completed_studies():

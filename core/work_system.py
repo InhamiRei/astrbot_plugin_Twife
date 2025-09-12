@@ -165,8 +165,11 @@ def process_work_completion(user_id: str):
     
     print(f"[打工完成] 用户 {user_id} 消息生成完成，群组: {group_id}")
     return {
+        'message': result_message,
         'group_id': group_id,
-        'message': result_message
+        'unified_msg_origin': work_data.get('unified_msg_origin', f"aiocqhttp:GroupMessage:{group_id}"),
+        'user_id': user_id,
+        'nickname': nickname
     }
 
 def check_and_process_expired_works():
@@ -340,6 +343,9 @@ def process_expired_work(user_id: str):
         result_message += f"⚠️ 贴心提醒：" + "、".join(warnings) + "哦~"
     
     return {
+        'message': result_message,
         'group_id': group_id,
-        'message': result_message
+        'unified_msg_origin': work_data.get('unified_msg_origin', f"aiocqhttp:GroupMessage:{group_id}"),
+        'user_id': user_id,
+        'nickname': nickname
     }
