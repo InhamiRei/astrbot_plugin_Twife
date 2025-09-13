@@ -314,6 +314,64 @@ class WorkStudyHandler:
         
         yield event.plain_result(result_message)
     
+    async def stop_study(self, event: AstrMessageEvent):
+        """停止学习功能"""
+        try:
+            user_id = str(event.get_sender_id())
+            nickname = event.get_sender_name()
+        except AttributeError:
+            yield event.plain_result('无法通过 event.get_sender_id() 获取用户 ID，请检查消息事件对象。')
+            return
+
+        # 检查用户是否有老婆
+        wife_data = data_manager.get_user_wife_data(user_id)
+        if not wife_data:
+            yield event.plain_result(f': {nickname}，你还没有老婆，无法停止学习。请先使用"抽老婆"命令获取一个老婆！')
+            return
+
+        # 检查是否正在学习中
+        if user_id not in data_manager.study_status or not data_manager.study_status[user_id].get('is_studying', False):
+            yield event.plain_result(f': {nickname}，你的老婆现在没有在学习，无法停止学习！')
+            return
+
+        # 处理提前停止学习
+        from ..core.education_system import process_early_stop_study
+        result = process_early_stop_study(user_id)
+        
+        if result and result.get('message'):
+            yield event.plain_result(result['message'])
+        else:
+            yield event.plain_result(f': {nickname}，停止学习时出现了问题，请稍后再试！')
+
+    async def stop_work(self, event: AstrMessageEvent):
+        """停止打工功能"""
+        try:
+            user_id = str(event.get_sender_id())
+            nickname = event.get_sender_name()
+        except AttributeError:
+            yield event.plain_result('无法通过 event.get_sender_id() 获取用户 ID，请检查消息事件对象。')
+            return
+
+        # 检查用户是否有老婆
+        wife_data = data_manager.get_user_wife_data(user_id)
+        if not wife_data:
+            yield event.plain_result(f': {nickname}，你还没有老婆，无法停止打工。请先使用"抽老婆"命令获取一个老婆！')
+            return
+
+        # 检查是否正在打工中
+        if user_id not in data_manager.work_status or not data_manager.work_status[user_id].get('is_working', False):
+            yield event.plain_result(f': {nickname}，你的老婆现在没有在打工，无法停止打工！')
+            return
+
+        # 处理提前停止打工
+        from ..core.work_system import process_early_stop_work
+        result = process_early_stop_work(user_id)
+        
+        if result and result.get('message'):
+            yield event.plain_result(result['message'])
+        else:
+            yield event.plain_result(f': {nickname}，停止打工时出现了问题，请稍后再试！')
+
     def _check_travel_conflict(self, user_id: str):
         """检查是否与旅行冲突"""
         # 确保数据已经加载（防止重启后数据未加载的问题）

@@ -6,6 +6,195 @@ from .data_manager import WORK_LIST
 from ..utils.experience_utils import process_experience_gain
 from ..config.experience_config import get_exp_required_for_level
 
+def process_early_stop_work(user_id: str):
+    """处理提前停止打工"""
+    if user_id not in data_manager.work_status:
+        return None
+        
+    work_data = data_manager.work_status[user_id]
+    
+    # 检查是否正在打工
+    if not work_data.get('is_working', False):
+        return None
+    
+    work_id = work_data['work_id']
+    nickname = work_data['nickname']
+    group_id = work_data.get('group_id')
+    
+    # 计算实际打工时间（向下取整）
+    start_time = datetime.fromisoformat(work_data['start_time'])
+    current_time = datetime.now()
+    actual_duration = current_time - start_time
+    actual_hours = int(actual_duration.total_seconds() // 3600)  # 向下取整到小时
+    
+    print(f"[提前停止打工] 用户{user_id} 工作ID{work_id}，实际打工{actual_hours}小时")
+    
+    # 查找对应的工作信息
+    work_list_to_use = data_manager.WORK_LIST if data_manager.WORK_LIST else WORK_LIST
+    selected_work = None
+    for work in work_list_to_use:
+        if work["id"] == work_id:
+            selected_work = work
+            break
+    
+    if not selected_work:
+        # 清除打工状态
+        del data_manager.work_status[user_id]
+        data_manager.save_work_status()
+        return None
+    
+    original_duration = selected_work["duration"]
+    
+    # 如果不到1小时，没有收益
+    if actual_hours < 1:
+        # 清除打工状态
+        del data_manager.work_status[user_id]
+        data_manager.save_work_status()
+        
+        # 取消调度器中的任务
+        if data_manager.wife_plugin_instance:
+            try:
+                job_id = f"work_{user_id}"
+                data_manager.wife_plugin_instance.scheduler.remove_job(job_id)
+                print(f"[提前停止打工] 已取消调度任务: {job_id}")
+            except Exception as e:
+                print(f"[提前停止打工] 取消调度任务失败: {e}")
+        
+        return {
+            'message': f': {nickname}，打工时间不足1小时，没有任何收益哦~',
+            'group_id': group_id,
+            'user_id': user_id,
+            'nickname': nickname
+        }
+    
+    # 获取用户老婆数据
+    wife_data = data_manager.get_user_wife_data(user_id)
+    if not wife_data:
+        # 清除打工状态
+        del data_manager.work_status[user_id]
+        data_manager.save_work_status()
+        return None
+    
+    # 按实际小时数计算打工收益（按比例计算）
+    hour_ratio = actual_hours / original_duration  # 实际时间比例
+    
+    base_pay = selected_work["pay"]
+    base_growth_reward = selected_work["growth_reward"]
+    base_hunger_cost = selected_work["hunger_cost"]
+    base_cleanliness_cost = selected_work["cleanliness_cost"]
+    base_mood_cost = selected_work["mood_cost"]
+    base_health_cost = selected_work["health_cost"]
+    
+    # 按比例计算实际收益和消耗
+    pay = int(base_pay * hour_ratio)
+    growth_reward = int(base_growth_reward * hour_ratio)
+    hunger_cost = int(base_hunger_cost * hour_ratio)
+    cleanliness_cost = int(base_cleanliness_cost * hour_ratio)
+    mood_cost = int(base_mood_cost * hour_ratio)
+    health_cost = int(base_health_cost * hour_ratio)
+    
+    # 获取当前属性
+    current_growth = wife_data[6]
+    current_hunger = wife_data[7]
+    current_cleanliness = wife_data[8]
+    current_health = wife_data[9]
+    current_mood = wife_data[10]
+    
+    # 获取用户金币数据
+    user_data_obj = data_manager.get_user_data(user_id)
+    current_coins = user_data_obj["coins"]
+    
+    # 更新属性（确保属性在0-1000范围内）
+    total_growth = current_growth + growth_reward
+    new_hunger = max(0, min(1000, current_hunger - hunger_cost))
+    new_cleanliness = max(0, min(1000, current_cleanliness - cleanliness_cost))
+    new_health = max(0, min(1000, current_health - health_cost))
+    new_mood = max(0, min(1000, current_mood - mood_cost))
+    new_coins = current_coins + pay
+    
+    # 使用新的经验系统处理升级
+    current_level = wife_data[5]
+    current_growth = wife_data[6]
+    
+    exp_result = process_experience_gain(current_level, current_growth, growth_reward)
+    new_level = exp_result["new_level"]
+    new_growth = exp_result["new_growth"]
+    level_up = exp_result["level_ups"] > 0
+    
+    # 更新数据
+    data_manager.update_user_wife_data(user_id, 
+                        growth=new_growth,
+                        hunger=new_hunger,
+                        cleanliness=new_cleanliness,
+                        health=new_health,
+                        mood=new_mood,
+                        level=new_level)
+    data_manager.update_user_data(user_id, coins=new_coins)
+    
+    # 清除打工状态
+    del data_manager.work_status[user_id]
+    data_manager.save_work_status()
+    
+    # 取消调度器中的任务
+    if data_manager.wife_plugin_instance:
+        try:
+            job_id = f"work_{user_id}"
+            data_manager.wife_plugin_instance.scheduler.remove_job(job_id)
+            print(f"[提前停止打工] 已取消调度任务: {job_id}")
+        except Exception as e:
+            print(f"[提前停止打工] 取消调度任务失败: {e}")
+    
+    # 构建完成消息
+    wife_name = wife_data[0]
+    wife_display_name = wife_name.split('.')[0]
+    
+    result_message = f": {nickname}，你让{wife_display_name}提前结束了打工！\n"
+    result_message += f"💼 提前结束打工收获（{actual_hours}小时）：\n"
+    result_message += f"💰 获得金币 +{pay} ({current_coins} → {new_coins})\n"
+    
+    # 显示完整的成长值进度信息
+    next_level_exp = get_exp_required_for_level(new_level + 1)
+    exp_percentage = round((new_growth / next_level_exp * 100), 1) if next_level_exp > 0 else 100
+    result_message += f"📈 成长值 +{growth_reward} → {new_growth}/{next_level_exp} ({exp_percentage}%)\n"
+    
+    result_message += f"💥 工作消耗：\n"
+    result_message += f"🍽️ 饥饿值 -{hunger_cost} ({current_hunger} → {new_hunger})\n"
+    result_message += f"🧼 清洁度 -{cleanliness_cost} ({current_cleanliness} → {new_cleanliness})\n"
+    
+    # 处理心情显示：负值表示增加心情，正值表示减少心情
+    if mood_cost < 0:
+        result_message += f"😊 心情 +{abs(mood_cost)} ({current_mood} → {new_mood})\n"
+    else:
+        result_message += f"😊 心情 -{mood_cost} ({current_mood} → {new_mood})\n"
+    
+    result_message += f"❤️ 健康值 -{health_cost} ({current_health} → {new_health})\n"
+    
+    if exp_result["level_up_messages"]:
+        result_message += "⭐ " + "\n⭐ ".join(exp_result["level_up_messages"]) + "\n"
+    
+    result_message += f"⏰ 原计划打工{original_duration}小时，实际打工{actual_hours}小时\n"
+    
+    # 给出状态提醒
+    warnings = []
+    if new_hunger < 30:
+        warnings.append("🍽️ 她看起来有点饿了，记得给她准备点食物")
+    if new_cleanliness < 30:
+        warnings.append("🧼 她需要好好清洁一下了")
+    if new_mood < 30:
+        warnings.append("😊 她的心情不太好，需要你的安慰")
+    if new_health < 30:
+        warnings.append("❤️ 她的身体状况不太好，需要休息")
+    
+    if warnings:
+        result_message += f"⚠️ 贴心提醒：" + "、".join(warnings) + "哦~"
+    
+    return {
+        'message': result_message,
+        'group_id': group_id,
+        'user_id': user_id,
+        'nickname': nickname
+    }
+
 def check_and_process_completed_works():
     """检查并处理完成的打工"""
     current_time = datetime.now()
@@ -89,12 +278,12 @@ def process_work_completion(user_id: str):
     user_data_obj = data_manager.get_user_data(user_id)
     current_coins = user_data_obj["coins"]
     
-    # 更新属性
+    # 更新属性（确保属性在0-1000范围内）
     total_growth = current_growth + growth_reward
-    new_hunger = max(0, current_hunger - hunger_cost)
-    new_cleanliness = max(0, current_cleanliness - cleanliness_cost)
-    new_health = max(0, current_health - health_cost)
-    new_mood = max(0, current_mood - mood_cost)
+    new_hunger = max(0, min(1000, current_hunger - hunger_cost))
+    new_cleanliness = max(0, min(1000, current_cleanliness - cleanliness_cost))
+    new_health = max(0, min(1000, current_health - health_cost))
+    new_mood = max(0, min(1000, current_mood - mood_cost))
     new_coins = current_coins + pay
     
     # 使用新的经验系统处理升级
@@ -141,9 +330,16 @@ def process_work_completion(user_id: str):
     exp_percentage = round((new_growth / next_level_exp * 100), 1) if next_level_exp > 0 else 100
     result_message += f"📈 成长值 +{growth_reward} → {new_growth}/{next_level_exp} ({exp_percentage}%)\n"
     
+    result_message += f"💥 工作消耗：\n"
     result_message += f"🍽️ 饥饿值 -{hunger_cost} ({current_hunger} → {new_hunger})\n"
     result_message += f"🧼 清洁度 -{cleanliness_cost} ({current_cleanliness} → {new_cleanliness})\n"
-    result_message += f"😊 心情 -{mood_cost} ({current_mood} → {new_mood})\n"
+    
+    # 处理心情显示：负值表示增加心情，正值表示减少心情  
+    if mood_cost < 0:
+        result_message += f"😊 心情 +{abs(mood_cost)} ({current_mood} → {new_mood})\n"
+    else:
+        result_message += f"😊 心情 -{mood_cost} ({current_mood} → {new_mood})\n"
+    
     result_message += f"❤️ 健康值 -{health_cost} ({current_health} → {new_health})\n"
     
     if exp_result["level_up_messages"]:
@@ -269,12 +465,12 @@ def process_expired_work(user_id: str):
     user_data_obj = data_manager.get_user_data(user_id)
     current_coins = user_data_obj["coins"]
     
-    # 更新属性
+    # 更新属性（确保属性在0-1000范围内）
     total_growth = current_growth + growth_reward
-    new_hunger = max(0, current_hunger - hunger_cost)
-    new_cleanliness = max(0, current_cleanliness - cleanliness_cost)
-    new_health = max(0, current_health - health_cost)
-    new_mood = max(0, current_mood - mood_cost)
+    new_hunger = max(0, min(1000, current_hunger - hunger_cost))
+    new_cleanliness = max(0, min(1000, current_cleanliness - cleanliness_cost))
+    new_health = max(0, min(1000, current_health - health_cost))
+    new_mood = max(0, min(1000, current_mood - mood_cost))
     new_coins = current_coins + pay
     
     # 使用新的经验系统处理升级
@@ -324,6 +520,14 @@ def process_expired_work(user_id: str):
     result_message += f"💥 工作消耗：\n"
     result_message += f"🍽️ 饥饿值 -{hunger_cost} ({current_hunger} → {new_hunger})\n"
     result_message += f"🧼 清洁度 -{cleanliness_cost} ({current_cleanliness} → {new_cleanliness})\n"
+    
+    # 处理心情显示：负值表示增加心情，正值表示减少心情
+    if mood_cost < 0:
+        result_message += f"😊 心情 +{abs(mood_cost)} ({current_mood} → {new_mood})\n"
+    else:
+        result_message += f"😊 心情 -{mood_cost} ({current_mood} → {new_mood})\n"
+    
+    result_message += f"❤️ 健康值 -{health_cost} ({current_health} → {new_health})\n"
     
     if exp_result["level_up_messages"]:
         result_message += "⭐ " + "\n⭐ ".join(exp_result["level_up_messages"]) + "\n"

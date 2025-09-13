@@ -188,7 +188,7 @@ def process_study_completion(user_id: str):
     # 更新属性
     new_knowledge = current_knowledge + knowledge_gain
     total_growth = current_growth + growth_gain
-    new_hunger = max(0, current_hunger - hunger_loss)
+    new_hunger = max(0, min(1000, current_hunger - hunger_loss))
     
     # 检查学历升级
     education_upgrade = check_education_upgrade(new_knowledge, current_education)
@@ -257,6 +257,157 @@ def process_study_completion(user_id: str):
         'message': result_message,
         'group_id': group_id,
         'unified_msg_origin': study_data.get('unified_msg_origin', f"aiocqhttp:GroupMessage:{group_id}"),
+        'user_id': user_id,
+        'nickname': nickname
+    }
+
+def process_early_stop_study(user_id: str):
+    """处理提前停止学习"""
+    if user_id not in data_manager.study_status:
+        return None
+        
+    study_data = data_manager.study_status[user_id]
+    
+    # 检查是否正在学习
+    if not study_data.get('is_studying', False):
+        return None
+    
+    nickname = study_data['nickname']
+    group_id = study_data.get('group_id')
+    original_hours = study_data['hours']
+    
+    # 计算实际学习时间（向下取整）
+    start_time = datetime.fromisoformat(study_data['start_time'])
+    current_time = datetime.now()
+    actual_duration = current_time - start_time
+    actual_hours = int(actual_duration.total_seconds() // 3600)  # 向下取整到小时
+    
+    print(f"[提前停止学习] 用户{user_id} 原计划{original_hours}小时，实际学习{actual_hours}小时")
+    
+    # 如果不到1小时，没有收益
+    if actual_hours < 1:
+        # 清除学习状态
+        del data_manager.study_status[user_id]
+        data_manager.save_study_status()
+        
+        # 取消调度器中的任务
+        if data_manager.wife_plugin_instance:
+            try:
+                job_id = f"study_{user_id}"
+                data_manager.wife_plugin_instance.scheduler.remove_job(job_id)
+                print(f"[提前停止学习] 已取消调度任务: {job_id}")
+            except Exception as e:
+                print(f"[提前停止学习] 取消调度任务失败: {e}")
+        
+        return {
+            'message': f': {nickname}，学习时间不足1小时，没有任何收益哦~',
+            'group_id': group_id,
+            'user_id': user_id,
+            'nickname': nickname
+        }
+    
+    # 获取用户老婆数据
+    wife_data = get_user_wife_data(user_id)
+    if not wife_data:
+        # 清除学习状态
+        del data_manager.study_status[user_id]
+        data_manager.save_study_status()
+        return None
+    
+    # 按实际小时数计算学习收益
+    base_knowledge_gain = sum(random.randint(20, 30) for _ in range(actual_hours))  # 实际小时数的学识
+    growth_gain = actual_hours * random.randint(5, 10)      # 每小时5-10成长值
+    
+    # 应用房产学习加成到学识
+    user_data = get_user_data(user_id)
+    property_name = user_data.get("property", "桥洞下的破旧帐篷")
+    study_bonus = get_property_study_bonus(property_name)
+    
+    # 计算最终学识收益（基础学识 + 房产加成）
+    knowledge_gain = int(base_knowledge_gain * (1 + study_bonus / 100))
+    
+    hunger_loss = min(30, actual_hours * 3)                 # 按实际小时计算饥饿值消耗，最多30
+    
+    # 获取当前属性
+    current_knowledge = wife_data[13]
+    current_growth = wife_data[6]
+    current_hunger = wife_data[7]
+    current_education = wife_data[12]
+    
+    # 更新属性
+    new_knowledge = current_knowledge + knowledge_gain
+    total_growth = current_growth + growth_gain
+    new_hunger = max(0, min(1000, current_hunger - hunger_loss))
+    
+    # 检查学历升级
+    education_upgrade = check_education_upgrade(new_knowledge, current_education)
+    new_education = education_upgrade["name"] if education_upgrade else current_education
+    
+    # 使用新的经验系统处理升级
+    current_level = wife_data[5]
+    current_growth = wife_data[6]
+    
+    exp_result = process_experience_gain(current_level, current_growth, growth_gain)
+    new_level = exp_result["new_level"]
+    new_growth = exp_result["new_growth"]
+    level_up = exp_result["level_ups"] > 0
+    
+    # 更新老婆数据
+    update_user_wife_data(user_id, 
+                        knowledge=new_knowledge,
+                        growth=new_growth,
+                        hunger=new_hunger,
+                        education_level=new_education,
+                        level=new_level)
+    
+    # 清除学习状态
+    del data_manager.study_status[user_id]
+    data_manager.save_study_status()
+    
+    # 取消调度器中的任务
+    if data_manager.wife_plugin_instance:
+        try:
+            job_id = f"study_{user_id}"
+            data_manager.wife_plugin_instance.scheduler.remove_job(job_id)
+            print(f"[提前停止学习] 已取消调度任务: {job_id}")
+        except Exception as e:
+            print(f"[提前停止学习] 取消调度任务失败: {e}")
+    
+    # 构建完成消息
+    wife_name = wife_data[0]
+    wife_display_name = wife_name.split('.')[0]
+    
+    result_message = f": {nickname}，你让{wife_display_name}提前结束了学习！\n"
+    result_message += f"📚 提前结束学习收获（{actual_hours}小时）：\n"
+    
+    # 显示学识收益（包含房产加成信息）
+    if study_bonus > 0:
+        result_message += f"💡 学识 +{base_knowledge_gain} (+{knowledge_gain - base_knowledge_gain}房产加成) = {knowledge_gain} ({current_knowledge} → {new_knowledge})\n"
+        result_message += f"🏠 房产学习加成：+{study_bonus}%\n"
+    else:
+        result_message += f"💡 学识 +{knowledge_gain} ({current_knowledge} → {new_knowledge})\n"
+    
+    # 显示完整的成长值进度信息
+    next_level_exp = get_exp_required_for_level(new_level + 1)
+    exp_percentage = round((new_growth / next_level_exp * 100), 1) if next_level_exp > 0 else 100
+    result_message += f"📈 成长值 +{growth_gain} → {new_growth}/{next_level_exp} ({exp_percentage}%)\n"
+    
+    result_message += f"🍽️ 饥饿值 -{hunger_loss} ({current_hunger} → {new_hunger})\n"
+    
+    if education_upgrade:
+        result_message += f"🎓 恭喜！学历升级：{current_education} → {new_education}！\n"
+    
+    if exp_result["level_up_messages"]:
+        result_message += "⭐ " + "\n⭐ ".join(exp_result["level_up_messages"]) + "\n"
+    
+    result_message += f"⏰ 原计划学习{original_hours}小时，实际学习{actual_hours}小时\n"
+    
+    if new_hunger < 30:
+        result_message += f"😰 她看起来有点饿了，记得给她准备点食物哦~"
+    
+    return {
+        'message': result_message,
+        'group_id': group_id,
         'user_id': user_id,
         'nickname': nickname
     }
