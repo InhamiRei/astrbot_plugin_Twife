@@ -201,11 +201,11 @@ def calculate_damage(user_id: str, boss_name: str = "可可萝（黑化）") -> 
     
     # 特殊属性影响
     special_multiplier = 1.0
-    special_multiplier += moe_value * 0.012  # 妹抖值每点+1.2%
-    special_multiplier += spoil_value * 0.01  # 撒娇值每点+1.0%
-    special_multiplier += tsundere_value * 0.015  # 傲娇值每点+1.5%
-    special_multiplier += dark_rate * 0.02  # 黑化率每点+2.0%
-    special_multiplier += contrast_cute * 0.012  # 反差萌每点+1.2%
+    special_multiplier += moe_value * 0.018  # 妹抖值每点+1.8%
+    special_multiplier += spoil_value * 0.013  # 撒娇值每点+1.3%
+    special_multiplier += tsundere_value * 0.022  # 傲娇值每点+2.2%
+    special_multiplier += dark_rate * 0.027  # 黑化率每点+2.7%
+    special_multiplier += contrast_cute * 0.018  # 反差萌每点+1.8%
     
     # 时装加成计算
     equipment_bonus = 0
