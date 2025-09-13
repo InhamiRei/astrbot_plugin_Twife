@@ -1,7 +1,7 @@
 """时间工具模块"""
 from datetime import datetime, timedelta
 
-def get_user_activity_status(user_id: str, study_status: dict, work_status: dict, work_list: list) -> tuple:
+def get_user_activity_status(user_id: str, study_status: dict, work_status: dict, work_list: list, travel_status: dict = None) -> tuple:
     """获取用户当前活动状态和剩余时间
     返回: (activity_type, activity_desc, remaining_time_str)
     """
@@ -42,6 +42,34 @@ def get_user_activity_status(user_id: str, study_status: dict, work_status: dict
                     break
             
             return ("working", f"正在{work_name}中", remaining_str)
+    
+    # 检查是否在旅行
+    if travel_status and user_id in travel_status and travel_status[user_id].get('is_traveling', False):
+        travel_data = travel_status[user_id]
+        end_time_str = travel_data['end_time']
+        end_time = datetime.fromisoformat(end_time_str)
+        now = datetime.now()
+        
+        if now < end_time:
+            remaining = end_time - now
+            hours = int(remaining.total_seconds() // 3600)
+            minutes = int((remaining.total_seconds() % 3600) // 60)
+            remaining_str = f"{hours}小时{minutes}分钟" if hours > 0 else f"{minutes}分钟"
+            
+            # 获取旅行目的地
+            try:
+                from ..config.travel_config import TRAVEL_DESTINATIONS
+                destination_index = travel_data.get('destination_index', 0)
+                if destination_index in TRAVEL_DESTINATIONS:
+                    destination = TRAVEL_DESTINATIONS[destination_index]
+                    location = f"{destination['country']}·{destination['city']}"
+                else:
+                    location = "未知地点"
+            except Exception as e:
+                print(f"获取旅行目的地信息时出错: {e}")
+                location = "旅行中"
+            
+            return ("traveling", f"正在{location}旅行中", remaining_str)
     
     # 默认状态
     return ("idle", "正在发呆", "")

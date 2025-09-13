@@ -303,7 +303,7 @@ class WifeHandler:
             
             # 获取当前活动状态
             from ..core import data_manager
-            activity_type, activity_desc, remaining_time = get_user_activity_status(target_id, data_manager.study_status, data_manager.work_status, data_manager.WORK_LIST)
+            activity_type, activity_desc, remaining_time = get_user_activity_status(target_id, data_manager.study_status, data_manager.work_status, data_manager.WORK_LIST, data_manager.travel_status)
             if remaining_time:
                 activity_status_str = f"🎯 当前状态：{activity_desc}（还剩{remaining_time}）"
             else:
