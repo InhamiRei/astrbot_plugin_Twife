@@ -201,26 +201,11 @@ def calculate_damage(user_id: str, boss_name: str = "可可萝（黑化）") -> 
     
     # 特殊属性影响
     special_multiplier = 1.0
-    special_multiplier += moe_value * 0.02  # 妹抖值每点+2%
-    special_multiplier += spoil_value * 0.015  # 撒娇值每点+1.5%
-    special_multiplier += tsundere_value * 0.025  # 傲娇值每点+2.5%
-    special_multiplier += dark_rate * 0.03  # 黑化率每点+3%
-    special_multiplier += contrast_cute * 0.02  # 反差萌每点+2%
-    
-    # Boss特定属性加成
-    boss_bonus_info = ""
-    if "可可萝" in boss_name:
-        # 打可可萝时，妹抖值额外加成50%
-        moe_bonus = moe_value * 0.05  # 额外5%每点妹抖值
-        special_multiplier += moe_bonus
-        if moe_bonus > 0:
-            boss_bonus_info = f" + 可可萝特攻(妹抖值x{moe_bonus:.2f})"
-    elif "芋头" in boss_name:
-        # 打大芋头王时，撒娇值额外加成50%
-        spoil_bonus = spoil_value * 0.05  # 额外5%每点撒娇值
-        special_multiplier += spoil_bonus
-        if spoil_bonus > 0:
-            boss_bonus_info = f" + 芋头王特攻(撒娇值x{spoil_bonus:.2f})"
+    special_multiplier += moe_value * 0.012  # 妹抖值每点+1.2%
+    special_multiplier += spoil_value * 0.01  # 撒娇值每点+1.0%
+    special_multiplier += tsundere_value * 0.015  # 傲娇值每点+1.5%
+    special_multiplier += dark_rate * 0.02  # 黑化率每点+2.0%
+    special_multiplier += contrast_cute * 0.012  # 反差萌每点+1.2%
     
     # 时装加成计算
     equipment_bonus = 0
@@ -253,7 +238,7 @@ def calculate_damage(user_id: str, boss_name: str = "可可萝（黑化）") -> 
     final_damage = max(final_damage, 10)
     
     # 构建详细信息
-    detail_info = f"等级x{level_multiplier:.2f} + 好感x{affection_multiplier:.2f} + 特殊属性x{special_multiplier:.2f}{boss_bonus_info} + 随机x{random_multiplier:.2f}"
+    detail_info = f"等级x{level_multiplier:.2f} + 好感x{affection_multiplier:.2f} + 特殊属性x{special_multiplier:.2f} + 随机x{random_multiplier:.2f}"
     if equipment_bonus > 0:
         detail_info += f" + 装备(+{equipment_bonus})"
         detail_info += f"[{','.join(equipment_info)}]"
