@@ -20,9 +20,9 @@ class ScratchCardHandler:
             (1000, 80, "好运"),
             (2000, 40, "大奖"),
 
-            ("三等奖", 1, "三等奖"),    # 20%咕咕嘎嘎池
-            ("二等奖", 0.5, "二等奖"),   # 50%咕咕嘎嘎池
-            ("一等奖", 0.1, "一等奖")    # 100%咕咕嘎嘎池
+            ("三等奖", 1, "三等奖"),    # 10万 + 30%咕咕嘎嘎池
+            ("二等奖", 0.5, "二等奖"),   # 30万 + 50%咕咕嘎嘎池
+            ("一等奖", 0.1, "一等奖")    # 50万 + 80%咕咕嘎嘎池
         ]
         
         # 特殊效果文本
@@ -164,7 +164,7 @@ class ScratchCardHandler:
             "一等奖": [
                 "🎆🎉 恭喜中一等奖 🎉🎆",
                 "👑 恭喜成为咕咕嘎嘎之王 👑",
-                "💰💰 咕咕嘎嘎池全归你 💰💰",
+                "💰💰 大奖落袋为安 💰💰",
                 "🌟 命运的奇迹",
                 "🚀 一飞冲天",
                 "🏆 传奇人生",
@@ -219,9 +219,9 @@ class ScratchCardHandler:
         pool_msg = "🎊 咕咕嘎嘎咕咕嘎嘎池状态 🎊\n\n"
         pool_msg += f"💰 当前咕咕嘎嘎池金额: {current_pool:,}金币\n\n"
         pool_msg += "🏆 咕咕嘎嘎池奖励说明:\n"
-        pool_msg += f"🥇 一等奖: {current_pool:,}金币 (咕咕嘎嘎池100%)\n"
-        pool_msg += f"🥈 二等奖: {int(current_pool * 0.5):,}金币 (咕咕嘎嘎池50%)\n"
-        pool_msg += f"🥉 三等奖: {int(current_pool * 0.2):,}金币 (咕咕嘎嘎池20%)\n\n"
+        pool_msg += f"🥇 一等奖: 50万 + {int(current_pool * 0.8):,}金币 (固定50万 + 咕咕嘎嘎池80%)\n"
+        pool_msg += f"🥈 二等奖: 30万 + {int(current_pool * 0.5):,}金币 (固定30万 + 咕咕嘎嘎池50%)\n"
+        pool_msg += f"🥉 三等奖: 10万 + {int(current_pool * 0.3):,}金币 (固定10万 + 咕咕嘎嘎池30%)\n\n"
         pool_msg += "💡 经济系统说明:\n"
         pool_msg += "• 每次咕咕嘎嘎花费100金币，全部进入咕咕嘎嘎池\n"
         pool_msg += "• 所有奖励都从咕咕嘎嘎池扣除，维持经济平衡\n"
@@ -267,14 +267,17 @@ class ScratchCardHandler:
             description = reward_result[1]
             
             if prize_type == "三等奖":
-                reward_amount = int(current_pool * 0.2)
-                reduce_prize_pool(reward_amount)
+                pool_bonus = int(current_pool * 0.3)
+                reward_amount = 100000 + pool_bonus
+                reduce_prize_pool(pool_bonus)
             elif prize_type == "二等奖":
-                reward_amount = int(current_pool * 0.5)
-                reduce_prize_pool(reward_amount)
+                pool_bonus = int(current_pool * 0.5)
+                reward_amount = 300000 + pool_bonus
+                reduce_prize_pool(pool_bonus)
             elif prize_type == "一等奖":
-                reward_amount = current_pool
-                clear_prize_pool()
+                pool_bonus = int(current_pool * 0.8)
+                reward_amount = 500000 + pool_bonus
+                reduce_prize_pool(pool_bonus)
         else:
             # 普通奖励
             reward_amount = reward_result[0]
@@ -325,14 +328,17 @@ class ScratchCardHandler:
                 prize_counts[prize_type] += 1
                 
                 if prize_type == "三等奖":
-                    reward_amount = int(current_pool * 0.2)
-                    reduce_prize_pool(reward_amount)
+                    pool_bonus = int(current_pool * 0.3)
+                    reward_amount = 100000 + pool_bonus
+                    reduce_prize_pool(pool_bonus)
                 elif prize_type == "二等奖":
-                    reward_amount = int(current_pool * 0.5)
-                    reduce_prize_pool(reward_amount)
+                    pool_bonus = int(current_pool * 0.5)
+                    reward_amount = 300000 + pool_bonus
+                    reduce_prize_pool(pool_bonus)
                 elif prize_type == "一等奖":
-                    reward_amount = current_pool
-                    clear_prize_pool()
+                    pool_bonus = int(current_pool * 0.8)
+                    reward_amount = 500000 + pool_bonus
+                    reduce_prize_pool(pool_bonus)
             else:
                 # 普通奖励
                 reward_amount = reward_result[0]
@@ -377,11 +383,12 @@ class ScratchCardHandler:
             
             if isinstance(amount, str):
                 # 特殊奖励（三等奖、二等奖、一等奖）
-                if amount == "三等奖" and current_pool >= 100:  # 至少需要100金币才有意义
+                # 现在有固定奖励，门槛可以较低
+                if amount == "三等奖" and current_pool >= 1000:  # 30%至少有300金币奖池分成
                     can_afford = True
-                elif amount == "二等奖" and current_pool >= 200:  # 至少需要200金币才有意义
+                elif amount == "二等奖" and current_pool >= 2000:  # 50%至少有1000金币奖池分成
                     can_afford = True
-                elif amount == "一等奖" and current_pool >= 500:  # 至少需要500金币才有意义
+                elif amount == "一等奖" and current_pool >= 5000:  # 80%至少有4000金币奖池分成
                     can_afford = True
             else:
                 # 普通奖励
@@ -500,7 +507,8 @@ class ScratchCardHandler:
             result_msg += f"👑  {reward_amount:,}金币大奖  👑\n" 
             result_msg += "🎆🎆🎆🎆🎆🎆🎆🎆🎆🎆\n\n"
             result_msg += f"🏆 恭喜 {nickname} 成为咕咕嘎嘎传奇！\n"
-            result_msg += f"💰 咕咕嘎嘎池全归你：{reward_amount:,}金币\n"
+            result_msg += f"💰 固定奖励：500,000金币\n"
+            result_msg += f"🎊 奖池分成：{reward_amount - 500000:,}金币 (80%)\n"
             result_msg += f"💎 余额：{old_coins:,} → {new_coins:,}金币\n"
             result_msg += f"\n🌟 {effect_text}"
         elif prize_type == "二等奖":
@@ -509,7 +517,8 @@ class ScratchCardHandler:
             result_msg += f"🌟  {description}  🌟\n"
             result_msg += "🎊🎊🎊🎊🎊🎊🎊🎊\n\n"
             result_msg += f"🎯 {effect_text}\n"
-            result_msg += f"💰 咕咕嘎嘎池50%：{reward_amount:,}金币\n"
+            result_msg += f"💰 固定奖励：300,000金币\n"
+            result_msg += f"🎊 奖池分成：{reward_amount - 300000:,}金币 (50%)\n"
             result_msg += f"💎 余额：{old_coins:,} → {new_coins:,}金币"
         elif prize_type == "三等奖":
             # 三等奖展示
@@ -517,7 +526,8 @@ class ScratchCardHandler:
             result_msg += f"🎉 {description} 🎉\n"
             result_msg += "✨✨✨✨✨✨\n\n"
             result_msg += f"🚀 {effect_text}\n"
-            result_msg += f"💰 咕咕嘎嘎池20%：{reward_amount:,}金币\n"
+            result_msg += f"💰 固定奖励：100,000金币\n"
+            result_msg += f"🎊 奖池分成：{reward_amount - 100000:,}金币 (30%)\n"
             result_msg += f"💎 余额：{old_coins:,} → {new_coins:,}金币"
         elif reward_amount == 0:
             result_msg += f"💔 {description} - {effect_text}\n"

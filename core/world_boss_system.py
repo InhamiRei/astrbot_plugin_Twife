@@ -19,9 +19,9 @@ WORLD_BOSS_CONFIG = {
             {"phase": 3, "max_hp": 10000, "name": "精灵的启示"}
         ],
         "rewards": {
-            1: {"coins": [10000, 20000], "items": ["可可萝的围裙", "温暖的料理", "美食食谱"]},
-            2: {"coins": [50000, 100000], "items": ["可可萝的围裙", "温暖的料理", "美食食谱", "可可萝的笑容", "公主之心"]},
-            3: {"coins": [100000, 150000], "items": ["可可萝的围裙", "温暖的料理", "美食食谱", "可可萝的笑容", "公主之心", "可可萝的发夹", "厨师的骄傲"]}
+            1: {"coins": [10000, 15000], "items": ["可可萝的围裙", "温暖的料理", "美食食谱"]},
+            2: {"coins": [20000, 30000], "items": ["可可萝的围裙", "温暖的料理", "美食食谱", "可可萝的笑容", "公主之心"]},
+            3: {"coins": [30000, 50000], "items": ["可可萝的围裙", "温暖的料理", "美食食谱", "可可萝的笑容", "公主之心", "可可萝的发夹", "厨师的骄傲"]}
         },
         "voice_dir": "kkr"
     },
@@ -34,9 +34,9 @@ WORLD_BOSS_CONFIG = {
             {"phase": 3, "max_hp": 10000, "name": "芋头之王"}
         ],
         "rewards": {
-            1: {"coins": [8000, 15000], "items": ["芋头片", "烤芋头", "芋头泥"]},
-            2: {"coins": [40000, 80000], "items": ["芋头片", "烤芋头", "芋头泥", "金芋头", "芋头王冠"]},
-            3: {"coins": [80000, 120000], "items": ["芋头片", "烤芋头", "芋头泥", "金芋头", "芋头王冠", "芋头圣杯", "芋头权杖"]}
+            1: {"coins": [10000, 15000], "items": ["芋头片", "烤芋头", "芋头泥"]},
+            2: {"coins": [20000, 30000], "items": ["芋头片", "烤芋头", "芋头泥", "金芋头", "芋头王冠"]},
+            3: {"coins": [30000, 50000], "items": ["芋头片", "烤芋头", "芋头泥", "金芋头", "芋头王冠", "芋头圣杯", "芋头权杖"]}
         },
         "voice_dir": "taro"
     }
@@ -134,6 +134,20 @@ def save_daily_attack_counts():
     with open(daily_attacks_file, 'w', encoding='utf-8') as f:
         json.dump(daily_attack_counts, f, ensure_ascii=False, indent=4)
 
+def reset_phase_attack_counts():
+    """重置阶段出刀次数（保留排名数据）"""
+    global daily_attack_counts
+    print("[世界Boss] 阶段切换，重置出刀次数但保留排名数据")
+    
+    # 保留日期但清空出刀次数
+    today = datetime.now().strftime("%Y-%m-%d")
+    daily_attack_counts = {
+        "last_reset_date": today,
+        "counts": {}
+    }
+    save_daily_attack_counts()
+    print("[世界Boss] 阶段出刀次数重置完成，所有玩家可以重新攻击")
+
 def initialize_new_boss(boss_name: str) -> dict:
     """初始化新的世界Boss"""
     if boss_name not in WORLD_BOSS_CONFIG:
@@ -152,8 +166,12 @@ def initialize_new_boss(boss_name: str) -> dict:
         "last_attack_time": None
     }
 
-def calculate_damage(user_id: str) -> Tuple[int, str]:
+def calculate_damage(user_id: str, boss_name: str = "可可萝（黑化）") -> Tuple[int, str]:
     """计算用户对Boss造成的伤害
+    
+    Args:
+        user_id: 用户ID
+        boss_name: Boss名称，用于计算特定属性加成
     
     Returns:
         Tuple[int, str]: (伤害值, 详细计算信息)
@@ -189,6 +207,21 @@ def calculate_damage(user_id: str) -> Tuple[int, str]:
     special_multiplier += dark_rate * 0.03  # 黑化率每点+3%
     special_multiplier += contrast_cute * 0.02  # 反差萌每点+2%
     
+    # Boss特定属性加成
+    boss_bonus_info = ""
+    if "可可萝" in boss_name:
+        # 打可可萝时，妹抖值额外加成50%
+        moe_bonus = moe_value * 0.05  # 额外5%每点妹抖值
+        special_multiplier += moe_bonus
+        if moe_bonus > 0:
+            boss_bonus_info = f" + 可可萝特攻(妹抖值x{moe_bonus:.2f})"
+    elif "芋头" in boss_name:
+        # 打大芋头王时，撒娇值额外加成50%
+        spoil_bonus = spoil_value * 0.05  # 额外5%每点撒娇值
+        special_multiplier += spoil_bonus
+        if spoil_bonus > 0:
+            boss_bonus_info = f" + 芋头王特攻(撒娇值x{spoil_bonus:.2f})"
+    
     # 时装加成计算
     equipment_bonus = 0
     equipment_info = []
@@ -220,7 +253,7 @@ def calculate_damage(user_id: str) -> Tuple[int, str]:
     final_damage = max(final_damage, 10)
     
     # 构建详细信息
-    detail_info = f"等级x{level_multiplier:.2f} + 好感x{affection_multiplier:.2f} + 特殊属性x{special_multiplier:.2f} + 随机x{random_multiplier:.2f}"
+    detail_info = f"等级x{level_multiplier:.2f} + 好感x{affection_multiplier:.2f} + 特殊属性x{special_multiplier:.2f}{boss_bonus_info} + 随机x{random_multiplier:.2f}"
     if equipment_bonus > 0:
         detail_info += f" + 装备(+{equipment_bonus})"
         detail_info += f"[{','.join(equipment_info)}]"
@@ -273,11 +306,11 @@ def attack_world_boss(user_id: str, nickname: str, group_id: str) -> dict:
         return {"success": False, "message": f"老婆健康值不足(当前{current_health})，需要至少30点健康值才能参战！"}
     
     # 计算伤害
-    damage, damage_detail = calculate_damage(user_id)
+    boss_name = world_boss_data["name"]
+    damage, damage_detail = calculate_damage(user_id, boss_name)
     
     # 检查阶段伤害阈值
     current_phase = world_boss_data["current_phase"]
-    boss_name = world_boss_data["name"]
     
     # # 2阶段需要至少1000伤害才能破防
     # if current_phase == 2 and damage < 1000:
@@ -317,18 +350,20 @@ def attack_world_boss(user_id: str, nickname: str, group_id: str) -> dict:
     
     # 记录伤害
     clean_nick = clean_nickname(nickname)  # 清理昵称
+    clean_wife_name = clean_nickname(wife_data[0])  # 清理老婆名字，去除图片后缀
     if user_id not in world_boss_damage_records:
         world_boss_damage_records[user_id] = {
             "total_damage": 0,
             "attack_count": 0,
             "nickname": clean_nick,
-            "wife_name": wife_data[0],
+            "wife_name": clean_wife_name,
             "group_id": group_id
         }
     
     world_boss_damage_records[user_id]["total_damage"] += damage
     world_boss_damage_records[user_id]["attack_count"] += 1
     world_boss_damage_records[user_id]["nickname"] = clean_nick  # 更新昵称
+    world_boss_damage_records[user_id]["wife_name"] = clean_wife_name  # 更新老婆名字，确保去除图片后缀
     
     # 对Boss造成伤害
     world_boss_data["current_hp"] -= damage
@@ -399,6 +434,9 @@ def attack_world_boss(user_id: str, nickname: str, group_id: str) -> dict:
             world_boss_data["max_hp"] = next_phase_config["max_hp"]
             world_boss_data["phase_name"] = next_phase_config["name"]
             
+            # 重置出刀次数但保留排名（伤害记录不重置，累加排名）
+            reset_phase_attack_counts()
+            
             result["next_phase"] = next_phase
             result["next_phase_name"] = next_phase_config["name"]
             result["next_phase_hp"] = next_phase_config["max_hp"]
@@ -426,23 +464,39 @@ def distribute_phase_rewards(phase: int, boss_name: str) -> dict:
     
     print(f"[世界Boss] 开始发放第{phase}阶段奖励给{len(world_boss_damage_records)}名参与者")
     
-    for user_id, damage_data in world_boss_damage_records.items():
+    # 按伤害排序生成排行榜
+    damage_ranking = sorted(world_boss_damage_records.items(), 
+                           key=lambda x: x[1]["total_damage"], 
+                           reverse=True)
+    
+    # 排名奖励配置
+    ranking_rewards = {
+        1: 3000,  # 第一名3000金币
+        2: 2000,  # 第二名2000金币
+        3: 1000   # 第三名1000金币
+    }
+    
+    for rank, (user_id, damage_data) in enumerate(damage_ranking, 1):
         if damage_data["total_damage"] > 0:
-            # 计算金币奖励
+            # 计算基础金币奖励
             coin_min, coin_max = rewards_config["coins"]
             coins_reward = random.randint(coin_min, coin_max)
+            
+            # 添加排名奖励
+            ranking_bonus = ranking_rewards.get(rank, 0)
+            total_coins = coins_reward + ranking_bonus
             
             # 随机选择1-3个物品奖励
             items_reward = random.sample(rewards_config["items"], min(random.randint(1, 3), len(rewards_config["items"])))
             
-            print(f"[世界Boss] 给用户{user_id}({damage_data['nickname']})发放奖励: {coins_reward}金币, {items_reward}")
+            print(f"[世界Boss] 给用户{user_id}({damage_data['nickname']})发放奖励: 基础{coins_reward}金币 + 排名奖励{ranking_bonus}金币 = 总计{total_coins}金币, {items_reward}")
             
             # 发放奖励 - 获取用户数据
             user_data_obj = get_user_data(user_id)
             old_coins = user_data_obj["coins"]
             
             # 发放金币
-            user_data_obj["coins"] += coins_reward
+            user_data_obj["coins"] += total_coins
             
             # 发放物品到战利品（不是背包！）
             for item in items_reward:
@@ -457,7 +511,7 @@ def distribute_phase_rewards(phase: int, boss_name: str) -> dict:
             # 验证数据是否保存成功
             verify_data = get_user_data(user_id)
             print(f"[世界Boss] 验证保存结果 - 用户{user_id}:")
-            print(f"  金币: {old_coins} -> {verify_data['coins']} (应该是{old_coins + coins_reward})")
+            print(f"  金币: {old_coins} -> {verify_data['coins']} (应该是{old_coins + total_coins})")
             for item in items_reward:
                 print(f"  战利品 {item}: {verify_data['trophies'].get(item, 0)} (应该>=1)")
             
@@ -466,8 +520,11 @@ def distribute_phase_rewards(phase: int, boss_name: str) -> dict:
             rewards_distributed[user_id] = {
                 "nickname": clean_nickname(damage_data["nickname"]),  # 确保昵称干净
                 "coins": coins_reward,
+                "ranking_bonus": ranking_bonus,
+                "total_coins": total_coins,
                 "items": items_reward,
-                "total_damage": damage_data["total_damage"]
+                "total_damage": damage_data["total_damage"],
+                "rank": rank
             }
     
     print(f"[世界Boss] 第{phase}阶段奖励发放完成，共{len(rewards_distributed)}名勇士获得奖励")

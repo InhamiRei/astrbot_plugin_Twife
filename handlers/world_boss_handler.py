@@ -159,15 +159,35 @@ class WorldBossHandler:
                     reward_count = len(attack_result["phase_rewards"])
                     result_msg += f"共有{reward_count}名勇士获得了奖励！\n"
                     
-                    # 显示每个人的具体奖励
-                    for user_id, reward_info in attack_result["phase_rewards"].items():
+                    # 按排名顺序显示奖励
+                    sorted_rewards = sorted(attack_result["phase_rewards"].items(), 
+                                          key=lambda x: x[1].get("rank", 999))
+                    
+                    for user_id, reward_info in sorted_rewards:
                         nickname = reward_info["nickname"]
-                        coins = reward_info["coins"]
+                        base_coins = reward_info["coins"]
+                        ranking_bonus = reward_info.get("ranking_bonus", 0)
+                        total_coins = reward_info.get("total_coins", base_coins)
                         items = reward_info["items"]
                         damage = reward_info["total_damage"]
+                        rank = reward_info.get("rank", 0)
                         
-                        result_msg += f"• {nickname} (伤害{damage:,}) 获得：\n"
-                        result_msg += f"  💰 {coins}金币\n"
+                        # 添加排名图标
+                        rank_icon = ""
+                        if rank == 1:
+                            rank_icon = "🥇"
+                        elif rank == 2:
+                            rank_icon = "🥈"
+                        elif rank == 3:
+                            rank_icon = "🥉"
+                        else:
+                            rank_icon = f"#{rank}"
+                        
+                        result_msg += f"• {rank_icon} {nickname} (伤害{damage:,}) 获得：\n"
+                        if ranking_bonus > 0:
+                            result_msg += f"  💰 基础奖励{base_coins}金币 + 排名奖励{ranking_bonus}金币 = {total_coins}金币\n"
+                        else:
+                            result_msg += f"  💰 {total_coins}金币\n"
                         for item in items:
                             result_msg += f"  📦 {item} x1\n"
 
