@@ -177,18 +177,21 @@ def process_study_completion(user_id: str):
     # 计算最终学识收益（基础学识 + 房产加成）
     knowledge_gain = int(base_knowledge_gain * (1 + study_bonus / 100))
     
-    hunger_loss = min(30, hours * 3)                 # 每小时减少3饥饿值，最多30
+    hunger_loss = min(180, hours * 15)               # 每小时减少15饥饿值，最多180
+    mood_loss = min(120, hours * 10)                 # 每小时减少10心情值，最多120
     
     # 获取当前属性
     current_knowledge = wife_data[13]
     current_growth = wife_data[6]
     current_hunger = wife_data[7]
+    current_mood = wife_data[10]
     current_education = wife_data[12]
     
     # 更新属性
     new_knowledge = current_knowledge + knowledge_gain
     total_growth = current_growth + growth_gain
     new_hunger = max(0, min(1000, current_hunger - hunger_loss))
+    new_mood = max(0, min(1000, current_mood - mood_loss))
     
     # 检查学历升级
     education_upgrade = check_education_upgrade(new_knowledge, current_education)
@@ -208,6 +211,7 @@ def process_study_completion(user_id: str):
                         knowledge=new_knowledge,
                         growth=new_growth,
                         hunger=new_hunger,
+                        mood=new_mood,
                         education_level=new_education,
                         level=new_level)
     
@@ -242,7 +246,9 @@ def process_study_completion(user_id: str):
     exp_percentage = round((new_growth / next_level_exp * 100), 1) if next_level_exp > 0 else 100
     result_message += f"📈 成长值 +{growth_gain} → {new_growth}/{next_level_exp} ({exp_percentage}%)\n"
     
+    result_message += f"💭 学习消耗：\n"
     result_message += f"🍽️ 饥饿值 -{hunger_loss} ({current_hunger} → {new_hunger})\n"
+    result_message += f"😊 心情 -{mood_loss} ({current_mood} → {new_mood})\n"
     
     if education_upgrade:
         result_message += f"🎓 恭喜！学历升级：{current_education} → {new_education}！\n"
@@ -250,8 +256,15 @@ def process_study_completion(user_id: str):
     if exp_result["level_up_messages"]:
         result_message += "⭐ " + "\n⭐ ".join(exp_result["level_up_messages"]) + "\n"
     
+    # 状态提醒
+    warnings = []
     if new_hunger < 30:
-        result_message += f"😰 她看起来有点饿了，记得给她准备点食物哦~"
+        warnings.append("🍽️ 她看起来有点饿了，记得给她准备点食物")
+    if new_mood < 30:
+        warnings.append("😊 她的心情不太好，需要你的安慰")
+    
+    if warnings:
+        result_message += f"⚠️ 贴心提醒：" + "、".join(warnings) + "哦~"
     
     return {
         'message': result_message,
@@ -326,18 +339,21 @@ def process_early_stop_study(user_id: str):
     # 计算最终学识收益（基础学识 + 房产加成）
     knowledge_gain = int(base_knowledge_gain * (1 + study_bonus / 100))
     
-    hunger_loss = min(30, actual_hours * 3)                 # 按实际小时计算饥饿值消耗，最多30
+    hunger_loss = min(180, actual_hours * 15)               # 按实际小时计算饥饿值消耗，最多180
+    mood_loss = min(120, actual_hours * 10)                 # 按实际小时计算心情消耗，最多120
     
     # 获取当前属性
     current_knowledge = wife_data[13]
     current_growth = wife_data[6]
     current_hunger = wife_data[7]
+    current_mood = wife_data[10]
     current_education = wife_data[12]
     
     # 更新属性
     new_knowledge = current_knowledge + knowledge_gain
     total_growth = current_growth + growth_gain
     new_hunger = max(0, min(1000, current_hunger - hunger_loss))
+    new_mood = max(0, min(1000, current_mood - mood_loss))
     
     # 检查学历升级
     education_upgrade = check_education_upgrade(new_knowledge, current_education)
@@ -357,6 +373,7 @@ def process_early_stop_study(user_id: str):
                         knowledge=new_knowledge,
                         growth=new_growth,
                         hunger=new_hunger,
+                        mood=new_mood,
                         education_level=new_education,
                         level=new_level)
     
@@ -392,7 +409,9 @@ def process_early_stop_study(user_id: str):
     exp_percentage = round((new_growth / next_level_exp * 100), 1) if next_level_exp > 0 else 100
     result_message += f"📈 成长值 +{growth_gain} → {new_growth}/{next_level_exp} ({exp_percentage}%)\n"
     
+    result_message += f"💭 学习消耗：\n"
     result_message += f"🍽️ 饥饿值 -{hunger_loss} ({current_hunger} → {new_hunger})\n"
+    result_message += f"😊 心情 -{mood_loss} ({current_mood} → {new_mood})\n"
     
     if education_upgrade:
         result_message += f"🎓 恭喜！学历升级：{current_education} → {new_education}！\n"
@@ -402,8 +421,15 @@ def process_early_stop_study(user_id: str):
     
     result_message += f"⏰ 原计划学习{original_hours}小时，实际学习{actual_hours}小时\n"
     
+    # 状态提醒
+    warnings = []
     if new_hunger < 30:
-        result_message += f"😰 她看起来有点饿了，记得给她准备点食物哦~"
+        warnings.append("🍽️ 她看起来有点饿了，记得给她准备点食物")
+    if new_mood < 30:
+        warnings.append("😊 她的心情不太好，需要你的安慰")
+    
+    if warnings:
+        result_message += f"⚠️ 贴心提醒：" + "、".join(warnings) + "哦~"
     
     return {
         'message': result_message,

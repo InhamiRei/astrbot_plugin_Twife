@@ -191,63 +191,46 @@ def calculate_damage(user_id: str, boss_name: str = "可可萝（黑化）") -> 
     base_dark_rate = wife_data[17]  # 黑化率
     base_contrast_cute = wife_data[18]  # 反差萌
     
-    # 装备加成计算 - 计算百分比加成后的最终属性值
-    equipment_info = []
+    # 装备加成计算 - 使用统一的服装系统
     equipment = user_data_obj.get("equipment", {})
     
-    # 属性加成倍率初始化
-    moe_bonus = 0  # 妹抖值加成百分比
-    spoil_bonus = 0  # 撒娇值加成百分比
-    tsundere_bonus = 0  # 傲娇值加成百分比
-    dark_bonus = 0  # 黑化率加成百分比
-    contrast_bonus = 0  # 反差萌加成百分比
+    # 使用统一的服装装备效果计算
+    from ..config.costume_config import calculate_equipment_effects, get_costume_by_name
+    equipment_effects, set_bonus = calculate_equipment_effects(equipment)
     
-    # 从items_config获取装备属性加成
-    from ..config.items_config import ITEMS_LIST
-    items_dict = {item['name']: item for item in ITEMS_LIST}
+    # 计算加成后的最终属性值
+    final_moe_value = base_moe_value * (1 + equipment_effects["moe_value"] / 100)
+    final_spoil_value = base_spoil_value * (1 + equipment_effects["spoil_value"] / 100)
+    final_tsundere_value = base_tsundere_value * (1 + equipment_effects["tsundere_value"] / 100)
+    final_dark_rate = base_dark_rate * (1 + equipment_effects["dark_rate"] / 100)
+    final_contrast_cute = base_contrast_cute * (1 + equipment_effects["contrast_cute"] / 100)
     
+    # 构建装备信息显示
+    equipment_info = []
     for slot, item_name in equipment.items():
-        if item_name and item_name in items_dict:
-            item_data = items_dict[item_name]
-            if 'stats' in item_data:
-                # 解析装备的百分比加成
-                stats = item_data['stats']
+        if item_name:
+            costume = get_costume_by_name(item_name)
+            if costume and "effects" in costume:
                 item_bonuses = []
+                effects = costume["effects"]
                 
-                if '妹抖值' in stats:
-                    bonus_pct = stats['妹抖值']  # 假设这是百分比，如15表示15%
-                    moe_bonus += bonus_pct
-                    item_bonuses.append(f"妹抖+{bonus_pct}%")
-                
-                if '撒娇值' in stats:
-                    bonus_pct = stats['撒娇值']
-                    spoil_bonus += bonus_pct
-                    item_bonuses.append(f"撒娇+{bonus_pct}%")
-                
-                if '傲娇值' in stats:
-                    bonus_pct = stats['傲娇值']
-                    tsundere_bonus += bonus_pct
-                    item_bonuses.append(f"傲娇+{bonus_pct}%")
-                
-                if '黑化率' in stats:
-                    bonus_pct = stats['黑化率']
-                    dark_bonus += bonus_pct
-                    item_bonuses.append(f"黑化+{bonus_pct}%")
-                
-                if '反差萌' in stats:
-                    bonus_pct = stats['反差萌']
-                    contrast_bonus += bonus_pct
-                    item_bonuses.append(f"反差萌+{bonus_pct}%")
+                if effects.get("moe_value", 0) > 0:
+                    item_bonuses.append(f"妹抖+{effects['moe_value']}%")
+                if effects.get("spoil_value", 0) > 0:
+                    item_bonuses.append(f"撒娇+{effects['spoil_value']}%")
+                if effects.get("tsundere_value", 0) > 0:
+                    item_bonuses.append(f"傲娇+{effects['tsundere_value']}%")
+                if effects.get("dark_rate", 0) > 0:
+                    item_bonuses.append(f"黑化+{effects['dark_rate']}%")
+                if effects.get("contrast_cute", 0) > 0:
+                    item_bonuses.append(f"反差萌+{effects['contrast_cute']}%")
                 
                 if item_bonuses:
                     equipment_info.append(f"{item_name}({','.join(item_bonuses)})")
     
-    # 计算加成后的最终属性值
-    final_moe_value = base_moe_value * (1 + moe_bonus / 100)
-    final_spoil_value = base_spoil_value * (1 + spoil_bonus / 100)
-    final_tsundere_value = base_tsundere_value * (1 + tsundere_bonus / 100)
-    final_dark_rate = base_dark_rate * (1 + dark_bonus / 100)
-    final_contrast_cute = base_contrast_cute * (1 + contrast_bonus / 100)
+    # 添加套装效果信息
+    if set_bonus:
+        equipment_info.append(f"套装效果({set_bonus['bonus_description']})")
     
     # 基础伤害计算
     # 等级影响 (1-100级，基础倍数0.5-5.0)
@@ -337,7 +320,7 @@ def attack_world_boss(user_id: str, nickname: str, group_id: str) -> dict:
     
     user_attack_count = daily_attack_counts.get("counts", {}).get(user_id, 0)
     if user_attack_count >= 5:
-        return {"success": False, "message": f"你今天已经攻击了{user_attack_count}次Boss，每天最多只能攻击5次！请明天再来！"}
+        return {"success": False, "message": f"你此阶段已经攻击了{user_attack_count}次Boss，每天最多只能攻击5次！请明天再来！"}
     
     # 检查老婆是否存在
     wife_data = get_user_wife_data(user_id)

@@ -129,12 +129,12 @@ class WifeDetailsHandler:
         
         # 如果有装备加成，显示基础值+加成值=最终值的格式
         if any(effect > 0 for effect in equipment_effects.values()):
-            # 计算实际增幅百分比（基于最终值相对于基础值的增幅）
-            actual_moe_increase = int((final_moe - base_moe) / max(base_moe, 1) * 100) if base_moe > 0 else equipment_effects['moe_value']
-            actual_spoil_increase = int((final_spoil - base_spoil) / max(base_spoil, 1) * 100) if base_spoil > 0 else equipment_effects['spoil_value']
-            actual_tsundere_increase = int((final_tsundere - base_tsundere) / max(base_tsundere, 1) * 100) if base_tsundere > 0 else equipment_effects['tsundere_value']
-            actual_dark_increase = int((final_dark_rate - base_dark_rate) / max(base_dark_rate, 1) * 100) if base_dark_rate > 0 else equipment_effects['dark_rate']
-            actual_contrast_increase = int((final_contrast_cute - base_contrast_cute) / max(base_contrast_cute, 1) * 100) if base_contrast_cute > 0 else equipment_effects['contrast_cute']
+            # 直接使用装备提供的真实加成百分比，而不是反推计算
+            actual_moe_increase = int(equipment_effects['moe_value'])
+            actual_spoil_increase = int(equipment_effects['spoil_value'])
+            actual_tsundere_increase = int(equipment_effects['tsundere_value'])
+            actual_dark_increase = int(equipment_effects['dark_rate'])
+            actual_contrast_increase = int(equipment_effects['contrast_cute'])
 
             attributes_text += f"💕 妹抖值：{base_moe} (+{actual_moe_increase}%) = {final_moe}\n"
             attributes_text += f"🎀 撒娇值：{base_spoil} (+{actual_spoil_increase}%) = {final_spoil}\n"
