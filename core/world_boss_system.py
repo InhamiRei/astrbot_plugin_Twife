@@ -185,32 +185,22 @@ def calculate_damage(user_id: str, boss_name: str = "可可萝（黑化）") -> 
     
     # 基础属性
     level = wife_data[5]  # 等级
-    affection = wife_data[4]  # 好感度
-    moe_value = wife_data[14]  # 妹抖值
-    spoil_value = wife_data[15]  # 撒娇值  
-    tsundere_value = wife_data[16]  # 傲娇值
-    dark_rate = wife_data[17]  # 黑化率
-    contrast_cute = wife_data[18]  # 反差萌
+    base_moe_value = wife_data[14]  # 妹抖值
+    base_spoil_value = wife_data[15]  # 撒娇值  
+    base_tsundere_value = wife_data[16]  # 傲娇值
+    base_dark_rate = wife_data[17]  # 黑化率
+    base_contrast_cute = wife_data[18]  # 反差萌
     
-    # 基础伤害计算
-    # 等级影响 (1-100级，基础倍数0.5-5.0)
-    level_multiplier = min(0.5 + (level * 0.045), 5.0)
-    
-    # 好感度影响 (0-10000，基础倍数0.1-2.0)
-    affection_multiplier = min(0.1 + (affection * 0.00019), 2.0)
-    
-    # 特殊属性影响
-    special_multiplier = 1.0
-    special_multiplier += moe_value * 0.018  # 妹抖值每点+1.8%
-    special_multiplier += spoil_value * 0.013  # 撒娇值每点+1.3%
-    special_multiplier += tsundere_value * 0.022  # 傲娇值每点+2.2%
-    special_multiplier += dark_rate * 0.027  # 黑化率每点+2.7%
-    special_multiplier += contrast_cute * 0.018  # 反差萌每点+1.8%
-    
-    # 时装加成计算
-    equipment_bonus = 0
+    # 装备加成计算 - 计算百分比加成后的最终属性值
     equipment_info = []
     equipment = user_data_obj.get("equipment", {})
+    
+    # 属性加成倍率初始化
+    moe_bonus = 0  # 妹抖值加成百分比
+    spoil_bonus = 0  # 撒娇值加成百分比
+    tsundere_bonus = 0  # 傲娇值加成百分比
+    dark_bonus = 0  # 黑化率加成百分比
+    contrast_bonus = 0  # 反差萌加成百分比
     
     # 从items_config获取装备属性加成
     from ..config.items_config import ITEMS_LIST
@@ -220,28 +210,88 @@ def calculate_damage(user_id: str, boss_name: str = "可可萝（黑化）") -> 
         if item_name and item_name in items_dict:
             item_data = items_dict[item_name]
             if 'stats' in item_data:
-                # 计算装备的总属性加成作为攻击力
-                item_bonus = 0
-                for stat, value in item_data['stats'].items():
-                    item_bonus += value
-                equipment_bonus += item_bonus
-                equipment_info.append(f"{item_name}(+{item_bonus})")
+                # 解析装备的百分比加成
+                stats = item_data['stats']
+                item_bonuses = []
+                
+                if '妹抖值' in stats:
+                    bonus_pct = stats['妹抖值']  # 假设这是百分比，如15表示15%
+                    moe_bonus += bonus_pct
+                    item_bonuses.append(f"妹抖+{bonus_pct}%")
+                
+                if '撒娇值' in stats:
+                    bonus_pct = stats['撒娇值']
+                    spoil_bonus += bonus_pct
+                    item_bonuses.append(f"撒娇+{bonus_pct}%")
+                
+                if '傲娇值' in stats:
+                    bonus_pct = stats['傲娇值']
+                    tsundere_bonus += bonus_pct
+                    item_bonuses.append(f"傲娇+{bonus_pct}%")
+                
+                if '黑化率' in stats:
+                    bonus_pct = stats['黑化率']
+                    dark_bonus += bonus_pct
+                    item_bonuses.append(f"黑化+{bonus_pct}%")
+                
+                if '反差萌' in stats:
+                    bonus_pct = stats['反差萌']
+                    contrast_bonus += bonus_pct
+                    item_bonuses.append(f"反差萌+{bonus_pct}%")
+                
+                if item_bonuses:
+                    equipment_info.append(f"{item_name}({','.join(item_bonuses)})")
+    
+    # 计算加成后的最终属性值
+    final_moe_value = base_moe_value * (1 + moe_bonus / 100)
+    final_spoil_value = base_spoil_value * (1 + spoil_bonus / 100)
+    final_tsundere_value = base_tsundere_value * (1 + tsundere_bonus / 100)
+    final_dark_rate = base_dark_rate * (1 + dark_bonus / 100)
+    final_contrast_cute = base_contrast_cute * (1 + contrast_bonus / 100)
+    
+    # 基础伤害计算
+    # 等级影响 (1-100级，基础倍数0.5-5.0)
+    level_multiplier = min(0.5 + (level * 0.045), 5.0)
+    
+    # 特殊属性影响 - 使用加成后的属性值
+    special_multiplier = 1.0
+    special_multiplier += final_moe_value * 0.012  # 妹抖值每点+1.2%
+    special_multiplier += final_spoil_value * 0.018  # 撒娇值每点+1.8%
+    special_multiplier += final_tsundere_value * 0.012  # 傲娇值每点+1.2%
+    special_multiplier += final_dark_rate * 0.03  # 黑化率每点+3%
+    special_multiplier += final_contrast_cute * 0.02  # 反差萌每点+2%
     
     # 随机波动 (80%-120%)
     random_multiplier = random.uniform(0.8, 1.2)
     
-    # 最终伤害计算
+    # 最终伤害计算 (去掉了好感度影响)
     base_damage = 100  # 基础伤害
-    final_damage = int(base_damage * level_multiplier * affection_multiplier * special_multiplier * random_multiplier) + equipment_bonus
+    final_damage = int(base_damage * level_multiplier * special_multiplier * random_multiplier)
     
     # 确保最小伤害
     final_damage = max(final_damage, 10)
     
     # 构建详细信息
-    detail_info = f"等级x{level_multiplier:.2f} + 好感x{affection_multiplier:.2f} + 特殊属性x{special_multiplier:.2f} + 随机x{random_multiplier:.2f}"
-    if equipment_bonus > 0:
-        detail_info += f" + 装备(+{equipment_bonus})"
-        detail_info += f"[{','.join(equipment_info)}]"
+    detail_info = f"等级x{level_multiplier:.2f} + 特殊属性x{special_multiplier:.2f} + 随机x{random_multiplier:.2f}"
+    if equipment_info:
+        detail_info += f" + 装备[{','.join(equipment_info)}]"
+    
+    # 打印详细的伤害计算日志
+    wife_name = clean_nickname(wife_data[0]) if wife_data else "未知"
+    print(f"[世界Boss] ===== 伤害计算详情 =====")
+    print(f"[世界Boss] 用户ID: {user_id}")
+    print(f"[世界Boss] 老婆: {wife_name} | 等级: {level}")
+    print(f"[世界Boss] 基础属性: 妹抖{base_moe_value} 撒娇{base_spoil_value} 傲娇{base_tsundere_value} 黑化{base_dark_rate} 反差萌{base_contrast_cute}")
+    
+    if equipment_info:
+        print(f"[世界Boss] 装备加成: {' | '.join(equipment_info)}")
+        print(f"[世界Boss] 最终属性: 妹抖{final_moe_value:.1f} 撒娇{final_spoil_value:.1f} 傲娇{final_tsundere_value:.1f} 黑化{final_dark_rate:.1f} 反差萌{final_contrast_cute:.1f}")
+    else:
+        print(f"[世界Boss] 装备: 无装备加成")
+    
+    print(f"[世界Boss] 计算过程: 基础{base_damage} × 等级{level_multiplier:.2f} × 特殊属性{special_multiplier:.2f} × 随机{random_multiplier:.2f} = {final_damage}")
+    print(f"[世界Boss] 最终伤害: {final_damage}")
+    print(f"[世界Boss] ========================")
     
     return final_damage, detail_info
 
@@ -252,6 +302,15 @@ def attack_world_boss(user_id: str, nickname: str, group_id: str) -> dict:
         dict: 攻击结果，包含伤害、Boss状态变化等信息
     """
     global world_boss_data, world_boss_damage_records, daily_attack_counts
+    
+    # 检查是否在Boss刷新时间段内 (23:55-00:05)
+    current_time = datetime.now()
+    current_hour = current_time.hour
+    current_minute = current_time.minute
+    
+    # 23:55-23:59 或 00:00-00:05 这些时间不能攻击
+    if (current_hour == 23 and current_minute >= 55) or (current_hour == 0 and current_minute <= 5):
+        return {"success": False, "message": "Boss刷新时间段(23:55-00:05)，暂时无法攻击！请稍后再试。"}
     
     # 检查Boss是否存在并且数据完整
     if not world_boss_data or world_boss_data.get("is_defeated", True):

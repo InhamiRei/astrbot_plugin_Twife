@@ -3,7 +3,7 @@ import os
 
 # 插件基本信息
 PLUGIN_NAME = "群老婆插件"
-PLUGIN_VERSION = "v1.4"
+PLUGIN_VERSION = "v1.2.3"
 PLUGIN_AUTHOR = "Hey、小怪兽"
 
 # 文件路径配置

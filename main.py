@@ -51,7 +51,7 @@ from .handlers.museum_handler import MuseumHandler
     "astrbot_plugin_aw",
     "Hey、小怪兽",
     "群老婆插件",
-    "v1.4",
+    "v1.2.3",
     ""
 )
 class WifePlugin(Star):

@@ -1,6 +1,6 @@
-name: astrbot_plugin_aw # 这是你的插件的唯一识别名。
-desc: 群老婆插件，支持抽老婆、查老婆、牛老婆等功能 # 插件简短描述
-help: 发送"抽老婆菜单"查看所有可用命令 # 插件的帮助信息
-version: v1.4 # 插件版本号。格式：v1.1.1 或者 v1.1
+name: astrbot_plugin_Twife # 这是你的插件的唯一识别名。
+desc: 群老婆插件 # 插件简短描述
+help: 具体仓库查看 # 插件的帮助信息
+version: v1.2.3 # 插件版本号。格式：v1.1.1 或者 v1.1
 author: Hey、小怪兽 # 作者
-repo: https://github.com/zgojin/zgojin-zgojin-astrbot_plugin_AW # 插件的仓库地址
+repo: '' # 插件的仓库地址
