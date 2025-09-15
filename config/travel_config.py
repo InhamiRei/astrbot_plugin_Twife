@@ -7,9 +7,9 @@ TRAVEL_DESTINATIONS = {
         "city": "北京", 
         "description": "中国首都，政治与文化中心",
         "journey": "清晨到天安门广场观看升旗仪式，早餐来一碗热豆汁配焦圈感受老北京味道，随后进入故宫参观午门、太和殿和珍宝馆，欣赏皇家建筑的宏伟与典藏的珍宝，午餐在王府井全聚德品尝正宗烤鸭，下午骑自行车穿梭胡同参观四合院，再到什刹海乘船，湖面波光粼粼，远处还能听见票友唱京剧，傍晚登景山公园俯瞰故宫金瓦在余晖中熠熠生辉，晚上簋街大快朵颐小龙虾、爆肚与烤串，体验热闹的夜北京。",
-        "duration": "10h",
+        "duration": "8h",
         "cost": 60000,
-        "charm_fragments": (30, 80),
+        "charm_fragments": (30, 70),
         "blackening_fragments": (0, 0),
         "special_reward": "历史文物",
         "effects": {"hunger": 50, "cleanliness": 50, "mood": 100, "health": 50, "growth": 100},
@@ -22,7 +22,7 @@ TRAVEL_DESTINATIONS = {
         "journey": "清晨在西湖边晨跑或散步，雾气弥漫的湖面映衬着断桥残雪的美景，随后乘画舫游览西湖，沿途经过三潭印月和雷峰塔，上岸后前往灵隐寺烧香祈福，午餐到楼外楼品尝龙井虾仁、西湖醋鱼和东坡肉，下午在苏堤春晓漫步或骑行环湖，再到龙井村体验采茶与品茶，傍晚去九溪烟树走走感受溪水潺潺和满山绿意，夜晚则前往河坊街品尝定胜糕、梅菜扣肉等小吃，并顺手买丝绸或龙井茶作为伴手礼。",
         "duration": "8h",
         "cost": 30000,
-        "charm_fragments": (30, 80),
+        "charm_fragments": (30, 40),
         "blackening_fragments": (0, 0),
         "special_reward": "历史文物",
         "effects": {"hunger": 50, "cleanliness": 50, "mood": 100, "health": 50, "growth": 100},
@@ -35,7 +35,7 @@ TRAVEL_DESTINATIONS = {
         "journey": "清晨在丽江古城的青石板路上漫步，看纳西小院木雕窗棂，吃一碗热腾腾的米线，上午出发前往玉龙雪山，乘索道登上冰川公园，感受高原雪域的壮丽风光，午餐在白沙古镇品尝腊排骨火锅，下午前往大理洱海，骑行环湖拍照，远处苍山如黛，湖水碧波荡漾，傍晚在洱海边的小酒馆里一边听民谣一边看落日余晖洒在水面，晚上返回丽江参加纳西古乐演出或篝火晚会，与少数民族载歌载舞共度热闹时光。",
         "duration": "8h",
         "cost": 40000,
-        "charm_fragments": (30, 80),
+        "charm_fragments": (30, 50),
         "blackening_fragments": (0, 0),
         "special_reward": "历史文物",
         "effects": {"hunger": 50, "cleanliness": 50, "mood": 100, "health": 50, "growth": 100},
@@ -48,7 +48,7 @@ TRAVEL_DESTINATIONS = {
         "journey": "早晨出发前往临潼参观兵马俑，数千兵马俑整齐列阵气势恢宏，随后游览华清池感受唐玄宗与杨贵妃的凄美故事，午餐在回民街大快朵颐羊肉泡馍、肉夹馍与冰峰汽水，下午登上古城墙骑单车一圈，俯瞰古城街景，傍晚前往大雁塔北广场观看壮观的音乐喷泉，夜晚则到德福巷酒吧街听live或者再来一碗辣香四溢的biangbiang面结束美好的一天。",
         "duration": "8h",
         "cost": 40000,
-        "charm_fragments": (30, 80),
+        "charm_fragments": (30, 50),
         "blackening_fragments": (0, 0),
         "special_reward": "历史文物",
         "effects": {"hunger": 50, "cleanliness": 50, "mood": 100, "health": 50, "growth": 100},
@@ -61,10 +61,10 @@ TRAVEL_DESTINATIONS = {
         "journey": "清晨到大阪城公园拍摄天守阁，登高远眺城市景色，上午去黑门市场大快朵颐，品尝新鲜生蚝、寿司、和牛串与章鱼小丸子，午餐在心斋桥附近拉面店享用地道豚骨拉面，下午到环球影城畅玩哈利波特园区和过山车，傍晚回到道顿堀，看著名的格力高广告牌灯光亮起，夜晚一边乘坐河上游船欣赏水上夜景，一边边走边吃大阪烧和串炸，感受城市的繁华与美味。",
         "duration": "8h",
         "cost": 50000,
-        "charm_fragments": (30, 40),
+        "charm_fragments": (30, 60),
         "blackening_fragments": (0, 0),
         "special_reward": "历史文物",
-        "effects": {"hunger": 50, "cleanliness": 50, "mood": 100, "health": 50, "growth": 100},
+        "effects": {"hunger": 100, "cleanliness": 20, "mood": 50, "health": 20, "growth": 100},
         "artifacts": ["大阪城天守阁瓦片", "道顿堀江户时代商标", "黑门市场明治铜秤", "心斋桥古石灯笼", "丰臣家纹章瓦当"]
     },
     6: {
@@ -72,12 +72,12 @@ TRAVEL_DESTINATIONS = {
         "city": "东京",
         "description": "日本首都，国际大都市",
         "journey": "早晨到浅草雷门拍照，在浅草寺求签并在仲见世街尝人形烧，上午前往上野公园散步参观博物馆或动物园，再去秋叶原购物街体验二次元文化和扭蛋机，午餐品尝拉面或回转寿司，下午去银座逛百货公司然后到涩谷忠犬八公像前合影并穿越世界最繁忙的十字路口，傍晚登涩谷Sky观景台俯瞰夕阳下的东京塔和远处的富士山，夜晚前往新宿歌舞伎町体验夜生活，在居酒屋享用烤鸡串配冰镇啤酒，最后在便利店买草莓牛奶和甜点带回酒店。",
-        "duration": "10h",
+        "duration": "8h",
         "cost": 60000,
-        "charm_fragments": (30, 40),
+        "charm_fragments": (30, 70),
         "blackening_fragments": (0, 0),
         "special_reward": "历史文物",
-        "effects": {"hunger": 100, "cleanliness": 20, "mood": 100, "health": 20, "growth": 150},
+        "effects": {"hunger": 100, "cleanliness": 20, "mood": 50, "health": 20, "growth": 100},
         "artifacts": ["浅草寺江户古钟", "江户城石垣残片", "明治银座煤油灯", "德川家康印章复制品", "上野宽永寺古瓦"]
     },
     7: {
@@ -90,8 +90,34 @@ TRAVEL_DESTINATIONS = {
         "charm_fragments": (0, 0),
         "blackening_fragments": (20, 50),
         "special_reward": "历史文物",
-        "effects": {"hunger": 100, "cleanliness": 20, "mood": 100, "health": 20, "growth": 150},
+        "effects": {"hunger": 20, "cleanliness": 20, "mood": 20, "health": 20, "growth": 100},
         "artifacts": ["瑞光大金塔金叶", "昂山市场翡翠", "茵雅湖古玉", "殖民地邮票", "缅甸佛像残片"]
+    },
+    8: {
+        "country": "埃及",
+        "city": "开罗",
+        "description": "世界古文明，金字塔之城",
+        "journey": "清晨前往吉萨金字塔群观看日出照射在胡夫金字塔上的壮观景象，与神秘的狮身人面像合影留念，上午参观埃及博物馆欣赏图坦卡蒙法老的黄金面具和无数古埃及文物，午餐品尝传统埃及料理如烤羊肉和扁豆汤，下午漫步老开罗的科普特区参观悬空教堂和本-埃兹拉犹太会堂，傍晚登上萨拉丁城堡俯瞰开罗全景和远处的尼罗河，夜晚在尼罗河上乘坐传统帆船观赏两岸灯火，品尝阿拉伯水烟和甜茶，感受千年古都的神秘魅力。",
+        "duration": "10h",
+        "cost": 60000,
+        "charm_fragments": (40, 70),
+        "blackening_fragments": (0, 0),
+        "special_reward": "历史文物",
+        "effects": {"hunger": 100, "cleanliness": 20, "mood": 100, "health": 20, "growth": 150},
+        "artifacts": ["法老陵墓莎草纸", "古埃及圣甲虫护符", "古埃及象形文字石板", "尼罗河神庙雕像", "图坦卡蒙复制品"]
+    },
+    9: {
+        "country": "阿联酋",
+        "city": "迪拜",
+        "description": "中东金融中心，奢华与摩天大楼之城",
+        "journey": "清晨登上世界最高建筑哈利法塔148层观景台俯瞰迪拜全貌和波斯湾日出美景，上午前往迪拜购物中心逛世界最大的购物天堂并观赏室内瀑布，中午在Armani酒店享受奢华午餐，下午前往棕榈岛亚特兰蒂斯酒店体验水上乐园和与海豚互动，傍晚乘坐豪华游艇出海游览迪拜海岸线和帆船酒店，夜晚在迪拜喷泉观赏震撼的音乐喷泉表演，最后前往黄金街购买珠宝首饰或在香料街感受传统阿拉伯风情，体验沙漠与现代化的完美融合。",
+        "duration": "10h",
+        "cost": 100000,
+        "charm_fragments": (50, 90),
+        "blackening_fragments": (0, 0),
+        "special_reward": "历史文物",
+        "effects": {"hunger": 100, "cleanliness": 20, "mood": 100, "health": 20, "growth": 150},
+        "artifacts": ["古代阿拉伯商路印章", "古代阿拉伯书法手稿", "贝都因部落银币", "香料之路古地图", "古代阿拉伯星盘"]
     }
 }
 
@@ -179,6 +205,30 @@ SOUVENIRS = {
         {"name": "缅甸特色面条", "effects": {"hunger": 160, "mood": 80}, "description": "椰奶面条，异国美味"},
         {"name": "传统龙基服饰", "effects": {"mood": 120, "cleanliness": 90}, "description": "缅甸传统服装，异域风情"},
         {"name": "仰光街头小食", "effects": {"hunger": 140, "mood": 80}, "description": "街头美食，冒险味蕾"},
+    ],
+    
+    # 开罗纪念品
+    "开罗": [
+        {"name": "法老黄金项链", "effects": {"mood": 180, "cleanliness": 50}, "description": "古埃及风格，尊贵典雅"},
+        {"name": "金字塔水晶球", "effects": {"mood": 160, "health": 80}, "description": "神秘水晶，蕴含古老智慧"},
+        {"name": "尼罗河莎草纸画", "effects": {"mood": 140, "health": 60}, "description": "手工绘制，记录古代传说"},
+        {"name": "埃及艳后化妆盒", "effects": {"cleanliness": 150, "mood": 120}, "description": "精美化妆盒，重现古典美丽"},
+        {"name": "圣甲虫护身符", "effects": {"health": 100, "mood": 90}, "description": "古埃及护符，带来好运"},
+        {"name": "法老面具复制品", "effects": {"mood": 200, "cleanliness": 40}, "description": "图坦卡蒙面具，威严神圣"},
+        {"name": "阿拉伯香料盒", "effects": {"mood": 100, "health": 120}, "description": "传统香料，异域芬芳"},
+        {"name": "沙漠玫瑰水", "effects": {"cleanliness": 120, "mood": 110}, "description": "沙漠之花，清香怡人"},
+    ],
+    
+    # 迪拜纪念品
+    "迪拜": [
+        {"name": "黄金手镯", "effects": {"mood": 220, "cleanliness": 60}, "description": "纯金制品，奢华尊贵"},
+        {"name": "哈利法塔模型", "effects": {"mood": 180, "health": 80}, "description": "世界最高塔，摩天奇迹"},
+        {"name": "阿拉伯香水", "effects": {"cleanliness": 180, "mood": 140}, "description": "中东香氛，神秘诱人"},
+        {"name": "骆驼毛围巾", "effects": {"cleanliness": 100, "mood": 120}, "description": "沙漠之舟，温暖柔软"},
+        {"name": "波斯地毯", "effects": {"mood": 200, "health": 100}, "description": "手工编织，艺术珍品"},
+        {"name": "椰枣礼盒", "effects": {"hunger": 150, "mood": 100}, "description": "沙漠甘露，营养丰富"},
+        {"name": "帆船酒店纪念品", "effects": {"mood": 190, "health": 90}, "description": "七星奢华，传奇酒店"},
+        {"name": "沙画瓶", "effects": {"mood": 130, "cleanliness": 80}, "description": "彩色沙画，沙漠艺术"},
     ]
 }
 
@@ -215,6 +265,28 @@ MUSEUMS = {
         "description": "保存缅甸古代文明和佛教文化的圣地",
         "artifacts_accepted": [
             "瑞光大金塔金叶", "昂山市场翡翠", "茵雅湖古玉", "殖民地邮票", "缅甸佛像残片"
+        ],
+        "donation_rewards": {
+            "coins": 10000,
+            "experience": 2000
+        }
+    },
+    "埃及": {
+        "name": "开罗埃及博物馆",
+        "description": "收藏世界最丰富的古埃及文明珍宝",
+        "artifacts_accepted": [
+            "法老陵墓莎草纸", "古埃及圣甲虫护符", "古埃及象形文字石板", "尼罗河神庙雕像", "图坦卡蒙复制品"
+        ],
+        "donation_rewards": {
+            "coins": 10000,
+            "experience": 2000
+        }
+    },
+    "阿联酋": {
+        "name": "迪拜未来博物馆",
+        "description": "展示阿拉伯传统文化与现代科技融合的博物馆",
+        "artifacts_accepted": [
+            "古代阿拉伯商路印章", "古代阿拉伯书法手稿", "贝都因部落银币", "香料之路古地图", "古代阿拉伯星盘"
         ],
         "donation_rewards": {
             "coins": 10000,
