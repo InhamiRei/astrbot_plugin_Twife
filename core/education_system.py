@@ -147,6 +147,27 @@ def get_study_events():
         "为了提升自己而努力学习中！"
     ]
 
+def calculate_level_based_growth_gain(hours: int, level: int) -> dict:
+    """计算基于等级的成长值获取"""
+    # 基础成长值：每小时5-10成长值
+    base_growth = hours * random.randint(5, 10)
+    
+    # 等级加成：从4级开始提供额外加成
+    # 公式：max(0, (level - 3) * 每小时等级加成)
+    level_bonus_per_hour = max(0, (level - 3) * random.randint(4, 10))
+    level_bonus = hours * level_bonus_per_hour
+    
+    total_growth = base_growth + level_bonus
+    
+    print(f"[成长值计算] 等级{level}, {hours}小时 - 基础:{base_growth}, 等级加成:{level_bonus}, 总计:{total_growth}")
+    
+    return {
+        'base_growth': base_growth,
+        'level_bonus': level_bonus,
+        'total_growth': total_growth,
+        'has_level_bonus': level_bonus > 0
+    }
+
 def process_study_completion(user_id: str):
     """处理学习完成"""
     if user_id not in data_manager.study_status:
@@ -167,7 +188,9 @@ def process_study_completion(user_id: str):
     
     # 计算学习收益
     base_knowledge_gain = sum(random.randint(20, 30) for _ in range(hours))  # 学习N小时就抽取N次20-30的随机数相加
-    growth_gain = hours * random.randint(5, 10)      # 每小时5-10成长值
+    current_level = wife_data[5]  # 获取当前等级
+    growth_result = calculate_level_based_growth_gain(hours, current_level)  # 使用新的等级加成机制
+    growth_gain = growth_result['total_growth']
     
     # 应用房产学习加成到学识
     user_data = get_user_data(user_id)
@@ -244,7 +267,11 @@ def process_study_completion(user_id: str):
     # 显示完整的成长值进度信息
     next_level_exp = get_exp_required_for_level(new_level + 1)
     exp_percentage = round((new_growth / next_level_exp * 100), 1) if next_level_exp > 0 else 100
-    result_message += f"📈 成长值 +{growth_gain} → {new_growth}/{next_level_exp} ({exp_percentage}%)\n"
+    if growth_result['has_level_bonus']:
+        result_message += f"📈 成长值 +{growth_result['base_growth']} (+{growth_result['level_bonus']}等级加成) = {growth_gain} → {new_growth}/{next_level_exp} ({exp_percentage}%)\n"
+        result_message += f"⭐ 等级{current_level}学习加成：+{growth_result['level_bonus']}成长值\n"
+    else:
+        result_message += f"📈 成长值 +{growth_gain} → {new_growth}/{next_level_exp} ({exp_percentage}%)\n"
     
     result_message += f"💭 学习消耗：\n"
     result_message += f"🍽️ 饥饿值 -{hunger_loss} ({current_hunger} → {new_hunger})\n"
@@ -329,7 +356,9 @@ def process_early_stop_study(user_id: str):
     
     # 按实际小时数计算学习收益
     base_knowledge_gain = sum(random.randint(20, 30) for _ in range(actual_hours))  # 实际小时数的学识
-    growth_gain = actual_hours * random.randint(5, 10)      # 每小时5-10成长值
+    current_level = wife_data[5]  # 获取当前等级
+    growth_result = calculate_level_based_growth_gain(actual_hours, current_level)  # 使用新的等级加成机制
+    growth_gain = growth_result['total_growth']
     
     # 应用房产学习加成到学识
     user_data = get_user_data(user_id)
@@ -407,7 +436,11 @@ def process_early_stop_study(user_id: str):
     # 显示完整的成长值进度信息
     next_level_exp = get_exp_required_for_level(new_level + 1)
     exp_percentage = round((new_growth / next_level_exp * 100), 1) if next_level_exp > 0 else 100
-    result_message += f"📈 成长值 +{growth_gain} → {new_growth}/{next_level_exp} ({exp_percentage}%)\n"
+    if growth_result['has_level_bonus']:
+        result_message += f"📈 成长值 +{growth_result['base_growth']} (+{growth_result['level_bonus']}等级加成) = {growth_gain} → {new_growth}/{next_level_exp} ({exp_percentage}%)\n"
+        result_message += f"⭐ 等级{current_level}学习加成：+{growth_result['level_bonus']}成长值\n"
+    else:
+        result_message += f"📈 成长值 +{growth_gain} → {new_growth}/{next_level_exp} ({exp_percentage}%)\n"
     
     result_message += f"💭 学习消耗：\n"
     result_message += f"🍽️ 饥饿值 -{hunger_loss} ({current_hunger} → {new_hunger})\n"
