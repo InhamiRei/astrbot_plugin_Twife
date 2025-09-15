@@ -14,9 +14,9 @@ WORLD_BOSS_CONFIG = {
         "name": "可可萝（黑化）",
         "description": "被黑暗力量侵蚀的公主，散发着危险的气息",
         "phases": [
-            {"phase": 1, "max_hp": 1000, "name": "小小引导者"},
-            {"phase": 2, "max_hp": 5000, "name": "极光绽放"},
-            {"phase": 3, "max_hp": 10000, "name": "精灵的启示"}
+            {"phase": 1, "max_hp": 5000, "name": "小小引导者"},
+            {"phase": 2, "max_hp": 20000, "name": "极光绽放"},
+            {"phase": 3, "max_hp": 50000, "name": "精灵的启示"}
         ],
         "rewards": {
             1: {"coins": [10000, 15000], "items": ["可可萝的围裙", "温暖的料理", "美食食谱"]},
@@ -29,9 +29,9 @@ WORLD_BOSS_CONFIG = {
         "name": "大芋头王",
         "description": "巨大的芋头成精，散发着香甜诱人的气息",
         "phases": [
-            {"phase": 1, "max_hp": 1000, "name": "香甜表皮"},
-            {"phase": 2, "max_hp": 5000, "name": "软糯内心"},
-            {"phase": 3, "max_hp": 10000, "name": "芋头之王"}
+            {"phase": 1, "max_hp": 5000, "name": "香甜表皮"},
+            {"phase": 2, "max_hp": 20000, "name": "软糯内心"},
+            {"phase": 3, "max_hp": 50000, "name": "芋头之王"}
         ],
         "rewards": {
             1: {"coins": [10000, 15000], "items": ["芋头片", "烤芋头", "芋头泥"]},

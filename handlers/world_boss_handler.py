@@ -201,22 +201,26 @@ class WorldBossHandler:
                     # result_msg += f"新阶段血量：{attack_result['next_phase_hp']:,}\n"
                     # result_msg += "继续战斗吧勇士们！"
 
-            # 攻击成功后播放Boss对应的语音，和攻击结果一起发送
-            # 从攻击结果中获取Boss名称，确保即使Boss被击败也能正确播放语音
-            boss_name = attack_result.get("boss_name", "可可萝（黑化）")
-            
-            voice_file = self.get_random_boss_voice(boss_name)
-            if voice_file:
-                try:
-                    # 将攻击结果和语音一起发送
-                    yield event.chain_result([Plain(result_msg), Record(file=voice_file)])
-                except Exception as e:
-                    print(f"[World Boss Handler] 播放Boss语音失败: {e}")
-                    # 如果语音发送失败，至少发送攻击结果
-                    yield event.plain_result(result_msg)
-            else:
-                # 如果没有语音文件，只发送攻击结果
+            # 根据是否击败阶段决定是否播放语音
+            if attack_result["phase_defeated"]:
+                # 击败阶段时只发送总结信息，不播放语音
                 yield event.plain_result(result_msg)
+            else:
+                # 普通攻击时播放Boss对应的语音，和攻击结果一起发送
+                boss_name = attack_result.get("boss_name", "可可萝（黑化）")
+                
+                voice_file = self.get_random_boss_voice(boss_name)
+                if voice_file:
+                    try:
+                        # 将攻击结果和语音一起发送
+                        yield event.chain_result([Plain(result_msg), Record(file=voice_file)])
+                    except Exception as e:
+                        print(f"[World Boss Handler] 播放Boss语音失败: {e}")
+                        # 如果语音发送失败，至少发送攻击结果
+                        yield event.plain_result(result_msg)
+                else:
+                    # 如果没有语音文件，只发送攻击结果
+                    yield event.plain_result(result_msg)
 
             # 如果Boss完全被击败，发送最终排行榜
             if attack_result.get("boss_defeated", False) and attack_result.get("final_rewards"):
