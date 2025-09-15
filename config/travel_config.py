@@ -118,6 +118,19 @@ TRAVEL_DESTINATIONS = {
         "special_reward": "历史文物",
         "effects": {"hunger": 100, "cleanliness": 20, "mood": 100, "health": 20, "growth": 150},
         "artifacts": ["古代阿拉伯商路印章", "古代阿拉伯书法手稿", "贝都因部落银币", "香料之路古地图", "古代阿拉伯星盘"]
+    },
+    10: {
+        "country": "传说",
+        "city": "亚特兰蒂斯",
+        "description": "沉没的海底文明，水晶科技与神秘并存",
+        "journey": "清晨穿上深海潜水装备，在神秘的传送门中下潜至万米海底，眼前浮现出金碧辉煌的亚特兰蒂斯城市废墟，水晶塔在深海中发出柔和的蓝光，上午探索海神波塞冬的神殿，观赏古老的水晶科技装置仍在缓缓运转，午餐享用海洋精灵制作的深海珍馐，品尝从未见过的奇异海草和发光贝类，下午在失落的图书馆中研读古老的亚特兰蒂斯文明记录，傍晚乘坐水晶潜艇游览整座海底城市，夜晚参加海族的盛大庆典，与美人鱼一同在水晶宫殿中舞蹈，感受这个传说文明的神奇魅力与无尽智慧。",
+        "duration": "10h",
+        "cost": 500000,
+        "charm_fragments": (200, 600),
+        "blackening_fragments": (0, 0),
+        "special_reward": "历史文物",
+        "effects": {"hunger": 999, "cleanliness": 999, "mood": 999, "health": 999, "growth": 200},
+        "artifacts": ["亚特兰蒂斯水晶核心", "海神波塞冬三叉戟碎片", "深海智慧石板", "远古水晶能量球", "亚特兰蒂斯王冠残片"]
     }
 }
 
@@ -229,6 +242,18 @@ SOUVENIRS = {
         {"name": "椰枣礼盒", "effects": {"hunger": 150, "mood": 100}, "description": "沙漠甘露，营养丰富"},
         {"name": "帆船酒店纪念品", "effects": {"mood": 190, "health": 90}, "description": "七星奢华，传奇酒店"},
         {"name": "沙画瓶", "effects": {"mood": 130, "cleanliness": 80}, "description": "彩色沙画，沙漠艺术"},
+    ],
+    
+    # 亚特兰蒂斯纪念品
+    "亚特兰蒂斯": [
+        {"name": "水晶项链", "effects": {"mood": 300, "cleanliness": 150}, "description": "深海水晶制成，散发神秘蓝光"},
+        {"name": "海神护身符", "effects": {"health": 200, "mood": 180}, "description": "海神波塞冬的祝福，庇护航海平安"},
+        {"name": "深海珍珠", "effects": {"cleanliness": 200, "mood": 150}, "description": "万年深海孕育，价值连城"},
+        {"name": "亚特兰蒂斯音乐盒", "effects": {"mood": 250, "health": 120}, "description": "播放远古海族乐曲，令人心旷神怡"},
+        {"name": "智慧之书", "effects": {"mood": 200, "health": 180}, "description": "记录失落文明的智慧，开启心灵"},
+        {"name": "能量水晶", "effects": {"health": 250, "mood": 100}, "description": "蕴含古老能量，滋养身心"},
+        {"name": "海洋精华", "effects": {"cleanliness": 180, "health": 150}, "description": "纯净的海洋精华，美容养颜"},
+        {"name": "神话雕像", "effects": {"mood": 280, "health": 100}, "description": "海神与美人鱼的传说雕像"},
     ]
 }
 
@@ -291,6 +316,17 @@ MUSEUMS = {
         "donation_rewards": {
             "coins": 10000,
             "experience": 2000
+        }
+    },
+    "传说": {
+        "name": "神话传说博物馆",
+        "description": "收藏失落文明与神话传说文物的神秘殿堂",
+        "artifacts_accepted": [
+            "亚特兰蒂斯水晶核心", "海神波塞冬三叉戟碎片", "深海智慧石板", "远古水晶能量球", "亚特兰蒂斯王冠残片"
+        ],
+        "donation_rewards": {
+            "coins": 50000,
+            "experience": 10000
         }
     }
 }
