@@ -24,6 +24,10 @@ class WorldBossHandler:
                 voice_dir = os.path.join(self.boss_voice_base_dir, "taro")
                 # 大芋头王使用大写的MP3文件
                 extensions = ('.MP3', '.mp3', '.wav', '.ogg')
+            elif "圆头耄耋" in boss_name:
+                voice_dir = os.path.join(self.boss_voice_base_dir, "hjm")
+                # 圆头耄耋使用各种格式的音频文件
+                extensions = ('.mp3', '.wav', '.ogg', '.MP3')
             else:
                 # 默认使用可可萝语音
                 voice_dir = os.path.join(self.boss_voice_base_dir, "kkr")

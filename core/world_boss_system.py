@@ -14,14 +14,14 @@ WORLD_BOSS_CONFIG = {
         "name": "可可萝（黑化）",
         "description": "被黑暗力量侵蚀的公主，散发着危险的气息",
         "phases": [
-            {"phase": 1, "max_hp": 5000, "name": "小小引导者"},
-            {"phase": 2, "max_hp": 20000, "name": "极光绽放"},
+            {"phase": 1, "max_hp": 10000, "name": "小小引导者"},
+            {"phase": 2, "max_hp": 30000, "name": "极光绽放"},
             {"phase": 3, "max_hp": 50000, "name": "精灵的启示"}
         ],
         "rewards": {
-            1: {"coins": [10000, 15000], "items": ["可可萝的围裙", "温暖的料理", "美食食谱"]},
-            2: {"coins": [20000, 30000], "items": ["可可萝的围裙", "温暖的料理", "美食食谱", "可可萝的笑容", "公主之心"]},
-            3: {"coins": [30000, 50000], "items": ["可可萝的围裙", "温暖的料理", "美食食谱", "可可萝的笑容", "公主之心", "可可萝的发夹", "厨师的骄傲"]}
+            1: {"coins": [10000, 12000], "items": ["可可萝的围裙", "温暖的料理", "美食食谱"]},
+            2: {"coins": [15000, 20000], "items": ["可可萝的围裙", "温暖的料理", "美食食谱", "可可萝的笑容", "公主之心"]},
+            3: {"coins": [20000, 30000], "items": ["可可萝的围裙", "温暖的料理", "美食食谱", "可可萝的笑容", "公主之心", "可可萝的发夹", "厨师的骄傲"]}
         },
         "voice_dir": "kkr"
     },
@@ -29,9 +29,9 @@ WORLD_BOSS_CONFIG = {
         "name": "大芋头王",
         "description": "巨大的芋头成精，散发着香甜诱人的气息",
         "phases": [
-            {"phase": 1, "max_hp": 5000, "name": "香甜表皮"},
-            {"phase": 2, "max_hp": 20000, "name": "软糯内心"},
-            {"phase": 3, "max_hp": 50000, "name": "芋头之王"}
+            {"phase": 1, "max_hp": 15000, "name": "香甜表皮"},
+            {"phase": 2, "max_hp": 35000, "name": "软糯内心"},
+            {"phase": 3, "max_hp": 120000, "name": "芋头之王"}
         ],
         "rewards": {
             1: {"coins": [10000, 15000], "items": ["芋头片", "烤芋头", "芋头泥"]},
@@ -39,6 +39,21 @@ WORLD_BOSS_CONFIG = {
             3: {"coins": [30000, 50000], "items": ["芋头片", "烤芋头", "芋头泥", "金芋头", "芋头王冠", "芋头圣杯", "芋头权杖"]}
         },
         "voice_dir": "taro"
+    },
+    "圆头耄耋": {
+        "name": "圆头耄耋",
+        "description": "我这个级别的基米，可以哈任何人！！！",
+        "phases": [
+            {"phase": 1, "max_hp": 18000, "name": "圆头凝视"},
+            {"phase": 2, "max_hp": 40000, "name": "哈气震场"},
+            {"phase": 3, "max_hp": 150000, "name": "猫界霸主"}
+        ],
+        "rewards": {
+            1: {"coins": [12000, 18000], "items": ["哈基米毛发", "耄耋碎片", "哈气表情包"]},
+            2: {"coins": [25000, 35000], "items": ["哈基米毛发", "耄耋碎片", "哈气表情包", "哈基米徽章", "哈气尖牙"]},
+            3: {"coins": [40000, 60000], "items": ["哈基米毛发", "耄耋碎片", "哈气表情包", "哈基米徽章", "哈气尖牙", "耄耋王冠", "南北绿豆"]}
+        },
+        "voice_dir": "hjm"
     }
 }
 
@@ -406,6 +421,9 @@ def attack_world_boss(user_id: str, nickname: str, group_id: str) -> dict:
     elif "芋头" in boss_name:
         # 大芋头王相关的基础奖励
         base_reward_items = ["小血瓶", "能量药水", "芋头渣", "芋头种子", "香甜精华"]
+    elif "圆头耄耋" in boss_name:
+        # 圆头耄耋相关的基础奖励
+        base_reward_items = ["小血瓶", "能量药水", "哈基米胡须", "圆头护符", "哈气精华"]
     else:
         # 默认奖励
         base_reward_items = ["小血瓶", "能量药水", "经验药水", "金币袋", "勇气徽章"]
@@ -634,7 +652,7 @@ def get_daily_boss_name():
     # 使用日期的哈希值来决定Boss，这样每天的Boss是固定的但看起来随机
     hash_value = int(hashlib.md5(today.encode()).hexdigest(), 16)
     
-    boss_list = ["可可萝（黑化）", "大芋头王"]
+    boss_list = ["可可萝（黑化）", "大芋头王", "圆头耄耋"]
     boss_index = hash_value % len(boss_list)
     
     return boss_list[boss_index]
