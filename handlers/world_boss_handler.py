@@ -74,6 +74,11 @@ class WorldBossHandler:
             status_msg = f"🐉 世界Boss状态 🐉\n"
             status_msg += f"Boss名称：{boss_status['name']}\n"
             status_msg += f"Boss描述：{boss_status['description']}\n"
+            
+            # 显示护盾信息
+            if boss_status.get('shield', 0) > 0:
+                status_msg += f"🛡️ 护盾减伤：{boss_status['shield']}%\n"
+            
             status_msg += f"当前阶段：第{boss_status['current_phase']}阶段 - {boss_status['phase_name']}\n"
             
             if boss_status.get('is_defeated', False):

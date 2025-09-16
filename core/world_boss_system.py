@@ -13,6 +13,7 @@ WORLD_BOSS_CONFIG = {
     "可可萝（黑化）": {
         "name": "可可萝（黑化）",
         "description": "被黑暗力量侵蚀的公主，散发着危险的气息",
+        "shield": 15,  # 护盾值15%，公主的神圣防护
         "phases": [
             {"phase": 1, "max_hp": 10000, "name": "小小引导者"},
             {"phase": 2, "max_hp": 30000, "name": "极光绽放"},
@@ -28,6 +29,7 @@ WORLD_BOSS_CONFIG = {
     "大芋头王": {
         "name": "大芋头王",
         "description": "巨大的芋头成精，散发着香甜诱人的气息",
+        "shield": 25,  # 护盾值25%，芋头的厚实外皮
         "phases": [
             {"phase": 1, "max_hp": 15000, "name": "香甜表皮"},
             {"phase": 2, "max_hp": 35000, "name": "软糯内心"},
@@ -43,6 +45,7 @@ WORLD_BOSS_CONFIG = {
     "圆头耄耋": {
         "name": "圆头耄耋",
         "description": "我这个级别的基米，可以哈任何人！！！",
+        "shield": 20,  # 护盾值20%，基米的天然抗性
         "phases": [
             {"phase": 1, "max_hp": 18000, "name": "圆头凝视"},
             {"phase": 2, "max_hp": 40000, "name": "哈气震场"},
@@ -251,11 +254,22 @@ def calculate_damage(user_id: str, boss_name: str = "可可萝（黑化）") -> 
     # 等级影响 (1-100级，基础倍数0.5-5.0)
     level_multiplier = min(0.5 + (level * 0.045), 5.0)
     
-    # 特殊属性影响 - 使用加成后的属性值
+    # 特殊属性影响 - 使用加成后的属性值，考虑Boss免疫
     special_multiplier = 1.0
-    special_multiplier += final_moe_value * 0.012  # 妹抖值每点+1.2%
-    special_multiplier += final_spoil_value * 0.018  # 撒娇值每点+1.8%
-    special_multiplier += final_tsundere_value * 0.012  # 傲娇值每点+1.2%
+    
+    # 妹抖值 - 可可萝免疫
+    if "可可萝" not in boss_name:
+        special_multiplier += final_moe_value * 0.013  # 妹抖值每点+1.3%
+    
+    # 撒娇值 - 圆头耄耋免疫
+    if "圆头耄耋" not in boss_name:
+        special_multiplier += final_spoil_value * 0.014  # 撒娇值每点+1.4%
+    
+    # 傲娇值 - 大芋头王免疫
+    if "芋头" not in boss_name:
+        special_multiplier += final_tsundere_value * 0.013  # 傲娇值每点+1.3%
+    
+    # 黑化率和反差萌不被免疫
     special_multiplier += final_dark_rate * 0.03  # 黑化率每点+3%
     special_multiplier += final_contrast_cute * 0.02  # 反差萌每点+2%
     
@@ -264,7 +278,16 @@ def calculate_damage(user_id: str, boss_name: str = "可可萝（黑化）") -> 
     
     # 最终伤害计算 (去掉了好感度影响)
     base_damage = 100  # 基础伤害
-    final_damage = int(base_damage * level_multiplier * special_multiplier * random_multiplier)
+    raw_damage = int(base_damage * level_multiplier * special_multiplier * random_multiplier)
+    
+    # 应用Boss护盾减伤
+    shield_percentage = 0
+    if boss_name in WORLD_BOSS_CONFIG:
+        shield_percentage = WORLD_BOSS_CONFIG[boss_name].get("shield", 0)
+    
+    # 计算护盾减伤后的最终伤害
+    shield_reduction = raw_damage * (shield_percentage / 100)
+    final_damage = int(raw_damage - shield_reduction)
     
     # 确保最小伤害
     final_damage = max(final_damage, 10)
@@ -273,6 +296,10 @@ def calculate_damage(user_id: str, boss_name: str = "可可萝（黑化）") -> 
     detail_info = f"等级x{level_multiplier:.2f} + 特殊属性x{special_multiplier:.2f} + 随机x{random_multiplier:.2f}"
     if equipment_info:
         detail_info += f" + 装备[{','.join(equipment_info)}]"
+    
+    # 添加护盾减伤信息
+    if shield_percentage > 0:
+        detail_info += f" - 护盾减伤{shield_percentage}%({int(shield_reduction)})"
     
     # 打印详细的伤害计算日志
     wife_name = clean_nickname(wife_data[0]) if wife_data else "未知"
@@ -287,7 +314,14 @@ def calculate_damage(user_id: str, boss_name: str = "可可萝（黑化）") -> 
     else:
         print(f"[世界Boss] 装备: 无装备加成")
     
-    print(f"[世界Boss] 计算过程: 基础{base_damage} × 等级{level_multiplier:.2f} × 特殊属性{special_multiplier:.2f} × 随机{random_multiplier:.2f} = {final_damage}")
+    # 显示护盾信息
+    if shield_percentage > 0:
+        print(f"[世界Boss] Boss护盾: {shield_percentage}% 减伤")
+        print(f"[世界Boss] 计算过程: 基础{base_damage} × 等级{level_multiplier:.2f} × 特殊属性{special_multiplier:.2f} × 随机{random_multiplier:.2f} = {raw_damage} (原始伤害)")
+        print(f"[世界Boss] 护盾减伤: {raw_damage} - {int(shield_reduction)} = {final_damage} (最终伤害)")
+    else:
+        print(f"[世界Boss] 计算过程: 基础{base_damage} × 等级{level_multiplier:.2f} × 特殊属性{special_multiplier:.2f} × 随机{random_multiplier:.2f} = {final_damage}")
+    
     print(f"[世界Boss] 最终伤害: {final_damage}")
     print(f"[世界Boss] ========================")
     
@@ -628,6 +662,12 @@ def get_world_boss_status() -> dict:
             "attack_count": damage_data["attack_count"]
         })
     
+    # 获取Boss护盾信息
+    boss_name = world_boss_data["name"]
+    shield_percentage = 0
+    if boss_name in WORLD_BOSS_CONFIG:
+        shield_percentage = WORLD_BOSS_CONFIG[boss_name].get("shield", 0)
+    
     return {
         "exists": True,
         "name": world_boss_data["name"],
@@ -636,6 +676,7 @@ def get_world_boss_status() -> dict:
         "phase_name": world_boss_data["phase_name"],
         "current_hp": world_boss_data["current_hp"],
         "max_hp": world_boss_data["max_hp"],
+        "shield": shield_percentage,
         "is_defeated": world_boss_data.get("is_defeated", False),
         "total_participants": len(world_boss_damage_records),
         "total_damage_dealt": sum(data["total_damage"] for data in world_boss_damage_records.values()),
