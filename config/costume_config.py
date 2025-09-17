@@ -528,6 +528,112 @@ COSTUME_LIST = [
             "contrast_cute": 12,  # 增加反差萌12%
         },
         "description": "小恶魔尾巴上的铃铛，每次摆动都发出诱人铃声"
+    },
+
+    # === 修女套装 ===
+    # 头部装备
+    {
+        "name": "修女·圣洁白纱头巾",
+        "slot": "头部",
+        "price": 100000,
+        "effects": {
+            "moe_value": 5,  # 增加妹抖值5%
+            "spoil_value": 5,  # 增加撒娇值5%
+            "tsundere_value": 5,  # 增加傲娇值5%
+            "dark_rate": 5,  # 增加黑化率5%
+            "contrast_cute": 8,  # 增加反差萌8%
+        },
+        "description": "圣洁的白色纱质头巾，散发着神圣的光辉"
+    },
+    
+    # 身体装备
+    {
+        "name": "修女·黑白修女长袍",
+        "slot": "身体",
+        "price": 155000,
+        "effects": {
+            "moe_value": 8,  # 增加妹抖值8%
+            "spoil_value": 8,  # 增加撒娇值8%
+            "tsundere_value": 8,  # 增加傲娇值8%
+            "dark_rate": 8,  # 增加黑化率8%
+            "contrast_cute": 12,  # 增加反差萌12%
+        },
+        "description": "庄重的黑白修女长袍，体现神圣与纯洁"
+    },
+    
+    # 手部装备
+    {
+        "name": "修女·纯白丝绸手套",
+        "slot": "手部",
+        "price": 85000,
+        "effects": {
+            "moe_value": 6,  # 增加妹抖值6%
+            "spoil_value": 6,  # 增加撒娇值6%
+            "tsundere_value": 6,  # 增加傲娇值6%
+            "dark_rate": 6,  # 增加黑化率6%
+            "contrast_cute": 8,  # 增加反差萌8%
+        },
+        "description": "纯白的丝绸手套，柔软而神圣"
+    },
+    
+    # 腿部装备
+    {
+        "name": "修女·神启长袜",
+        "slot": "腿部",
+        "price": 125000,
+        "effects": {
+            "moe_value": 7,  # 增加妹抖值7%
+            "spoil_value": 7,  # 增加撒娇值7%
+            "tsundere_value": 7,  # 增加傲娇值7%
+            "dark_rate": 7,  # 增加黑化率7%
+            "contrast_cute": 10,  # 增加反差萌10%
+        },
+        "description": "受神明祝福的长袜，蕴含着神启的力量"
+    },
+    
+    # 脚部装备
+    {
+        "name": "修女·纯白软底鞋",
+        "slot": "脚部",
+        "price": 115000,
+        "effects": {
+            "moe_value": 6,  # 增加妹抖值6%
+            "spoil_value": 6,  # 增加撒娇值6%
+            "tsundere_value": 6,  # 增加傲娇值6%
+            "dark_rate": 6,  # 增加黑化率6%
+            "contrast_cute": 9,  # 增加反差萌9%
+        },
+        "description": "纯白色的软底鞋，每一步都踏着神圣的光辉"
+    },
+    
+    # 手持装备
+    {
+        "name": "修女·十字圣典",
+        "slot": "手持",
+        "price": 95000,
+        "effects": {
+            "moe_value": 5,  # 增加妹抖值5%
+            "spoil_value": 5,  # 增加撒娇值5%
+            "tsundere_value": 5,  # 增加傲娇值5%
+            "dark_rate": 5,  # 增加黑化率5%
+            "contrast_cute": 15,  # 增加反差萌15%
+        },
+        "description": "神圣的十字圣典，记载着神的教诲与爱"
+    },
+    
+    # 饰品装备
+    {
+        "name": "修女·圣光吊坠",
+        "slot": "饰品",
+        "price": 90000,
+        "effects": {
+            "moe_value": 6,  # 增加妹抖值6%
+            "spoil_value": 6,  # 增加撒娇值6%
+            "tsundere_value": 6,  # 增加傲娇值6%
+            "dark_rate": 6,  # 增加黑化率6%
+            "contrast_cute": 12,  # 增加反差萌12%
+        },
+        "description": "散发着圣光的十字吊坠，守护纯洁的心灵"
     }
 ]
 
@@ -636,6 +742,27 @@ COSTUME_SET_BONUS = {
             "contrast_cute": 90,  # 套装额外增加90%反差萌
         },
         "bonus_description": "小恶魔套装效果：黑化率与傲娇值极致提升，诱惑魅力无法抗拒！"
+    },
+    
+    "修女套装": {
+        "pieces": [
+            "修女·圣洁白纱头巾",  # 头部
+            "修女·黑白修女长袍",  # 身体
+            "修女·纯白丝绸手套",  # 手部
+            "修女·神启长袜",  # 腿部
+            "修女·纯白软底鞋",  # 脚部
+            "修女·十字圣典",  # 手持
+            "修女·圣光吊坠"  # 饰品
+        ],
+        "required_slots": ["头部", "身体", "手部", "腿部", "脚部", "手持", "饰品"],
+        "bonus_effects": {
+            "moe_value": 25,  # 套装额外增加25%妹抖值
+            "spoil_value": 25,  # 套装额外增加25%撒娇值
+            "tsundere_value": 25,  # 套装额外增加25%傲娇值
+            "dark_rate": 25,  # 套装额外增加25%黑化率
+            "contrast_cute": 35,  # 套装额外增加35%反差萌
+        },
+        "bonus_description": "修女套装效果：神圣与纯洁的完美平衡，全属性均衡提升！"
     }
 }
 
