@@ -361,6 +361,10 @@ class WifeHandler:
 
     async def divorce(self, event: AstrMessageEvent):
         """净身出户功能"""
+        # 临时禁用净身出户功能
+        yield event.plain_result("为避免老婆数据丢失，请联系管理员净身出户")
+        return
+        
         group_id = event.message_obj.group_id
         if not group_id:
             yield event.plain_result('该功能仅支持群聊，请在群聊中使用。')

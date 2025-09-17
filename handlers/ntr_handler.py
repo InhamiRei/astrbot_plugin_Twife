@@ -40,6 +40,10 @@ class NTRHandler:
 
     async def ntr_wife(self, event: AstrMessageEvent):
         """牛老婆功能"""
+        # 临时禁用牛老婆功能
+        yield event.plain_result("纯爱战神一刀一个牛头人，现阶段无法牛老婆")
+        return
+        
         group_id = event.message_obj.group_id
         if not group_id:
             yield event.plain_result('该功能仅支持群聊，请在群聊中使用。')
