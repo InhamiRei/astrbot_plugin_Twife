@@ -258,8 +258,9 @@ COSTUME_LIST = [
         "slot": "头部",
         "price": 115000,
         "effects": {
-            "tsundere_value": 18,  # 增加傲娇值18%
-            "contrast_cute": 15,  # 增加反差萌15%
+            "tsundere_value": 20,  # 增加傲娇值20%
+            "spoil_value": 15,  # 增加撒娇值15%
+            "contrast_cute": 8,  # 增加反差萌8%
         },
         "description": "飘逸的红白流苏发带，神圣而优雅"
     },
@@ -270,9 +271,10 @@ COSTUME_LIST = [
         "slot": "身体",
         "price": 180000,
         "effects": {
-            "tsundere_value": 20,  # 增加傲娇值20%
-            "contrast_cute": 25,  # 增加反差萌25%
-            "dark_rate": 8,  # 增加黑化率8%
+            "tsundere_value": 25,  # 增加傲娇值25%
+            "spoil_value": 20,  # 增加撒娇值20%
+            "contrast_cute": 10,  # 增加反差萌10%
+            "dark_rate": 3,  # 增加黑化率3%
         },
         "description": "神圣的红白祈福长袍，蕴含神秘力量"
     },
@@ -283,8 +285,10 @@ COSTUME_LIST = [
         "slot": "手部",
         "price": 95000,
         "effects": {
-            "contrast_cute": 20,  # 增加反差萌20%
-            "tsundere_value": 10,  # 增加傲娇值10%
+            "tsundere_value": 15,  # 增加傲娇值15%
+            "spoil_value": 18,  # 增加撒娇值18%
+            "contrast_cute": 8,  # 增加反差萌8%
+            "moe_value": 2,  # 增加妹抖值2%
         },
         "description": "宽大的流光手套，散发着神秘光芒"
     },
@@ -295,8 +299,10 @@ COSTUME_LIST = [
         "slot": "腿部",
         "price": 140000,
         "effects": {
-            "tsundere_value": 25,  # 增加傲娇值25%
-            "contrast_cute": 12,  # 增加反差萌12%
+            "tsundere_value": 20,  # 增加傲娇值20%
+            "spoil_value": 25,  # 增加撒娇值25%
+            "contrast_cute": 8,  # 增加反差萌8%
+            "dark_rate": 2,  # 增加黑化率2%
         },
         "description": "传统的红色绯袴，庄重而神秘"
     },
@@ -307,8 +313,10 @@ COSTUME_LIST = [
         "slot": "脚部",
         "price": 130000,
         "effects": {
-            "contrast_cute": 22,  # 增加反差萌22%
-            "dark_rate": 10,  # 增加黑化率10%
+            "tsundere_value": 18,  # 增加傲娇值18%
+            "spoil_value": 22,  # 增加撒娇值22%
+            "contrast_cute": 8,  # 增加反差萌8%
+            "dark_rate": 2,  # 增加黑化率2%
         },
         "description": "受神明庇佑的传统木屐，每一步都蕴含神力"
     },
@@ -319,8 +327,10 @@ COSTUME_LIST = [
         "slot": "手持",
         "price": 108000,
         "effects": {
-            "contrast_cute": 35,  # 增加反差萌35%
-            "tsundere_value": 8,  # 增加傲娇值8%
+            "tsundere_value": 12,  # 增加傲娇值12%
+            "spoil_value": 20,  # 增加撒娇值20%
+            "contrast_cute": 10,  # 增加反差萌10%
+            "moe_value": 3,  # 增加妹抖值3%
         },
         "description": "神圣的御幣法器，能够净化邪恶"
     },
@@ -331,8 +341,10 @@ COSTUME_LIST = [
         "slot": "饰品",
         "price": 102000,
         "effects": {
-            "contrast_cute": 18,  # 增加反差萌18%
-            "dark_rate": 15,  # 增加黑化率15%
+            "tsundere_value": 10,  # 增加傲娇值10%
+            "spoil_value": 20,  # 增加撒娇值20%
+            "contrast_cute": 8,  # 增加反差萌8%
+            "dark_rate": 1,  # 增加黑化率1%
         },
         "description": "带有神秘符咒的小铃铛，清脆悦耳"
     },
@@ -693,13 +705,13 @@ COSTUME_SET_BONUS = {
         ],
         "required_slots": ["头部", "身体", "手部", "腿部", "脚部", "手持", "饰品"],
         "bonus_effects": {
-            "moe_value": 30,  # 套装额外增加30%妹抖值
-            "spoil_value": 20,  # 套装额外增加20%撒娇值
-            "tsundere_value": 80,  # 套装额外增加80%傲娇值
-            "dark_rate": 60,  # 套装额外增加60%黑化率
-            "contrast_cute": 100,  # 套装额外增加100%反差萌
+            "moe_value": 20,  # 套装额外增加20%妹抖值
+            "spoil_value": 40,  # 套装额外增加40%撒娇值
+            "tsundere_value": 120,  # 套装额外增加120%傲娇值
+            "dark_rate": 15,  # 套装额外增加15%黑化率
+            "contrast_cute": 30,  # 套装额外增加30%反差萌
         },
-        "bonus_description": "巫女套装效果：傲娇值与反差萌极大提升，神秘魅力无人能敌！"
+        "bonus_description": "巫女套装效果：傲娇值与撒娇值极大提升，神圣而傲娇的魅力无人能敌！"
     },
     
     "魔法少女套装": {
