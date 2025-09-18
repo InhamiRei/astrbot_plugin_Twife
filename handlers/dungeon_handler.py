@@ -183,8 +183,21 @@ class DungeonHandler:
             extra_battles = min(int(total_power / 10), 50)
             max_kills = base_battles + extra_battles
 
+            # 设置击杀上限（从地下城3开始限制）
+            dungeon_id = dungeon['id']
+            if dungeon_id >= 3:
+                # 地下城3: 30只, 地下城4: 35只, 地下城5: 40只, 地下城6: 45只...
+                kill_limit = 30 + (dungeon_id - 3) * 5
+            else:
+                # 地下城1和2不限制
+                kill_limit = float('inf')
+
             for _ in range(max_kills):
                 if not weighted_monsters:
+                    break
+                
+                # 检查击杀上限
+                if total_kills >= kill_limit:
                     break
                 
                 # 随机选择怪物
@@ -292,8 +305,8 @@ class DungeonHandler:
             if random.random() < 0.6:
                 new_tsundere = base_tsundere_value + random.randint(1, 2)
 
-            new_dark = dark_rate        # 黑化率（暴击率）保持不变
-            new_contrast = contrast_cute # 反差萌（暴击伤害）保持不变
+            new_dark = base_dark_rate        # 黑化率（暴击率）保持不变
+            new_contrast = base_contrast_cute # 反差萌（暴击伤害）保持不变
 
             # 使用新的经验系统处理升级
             current_level = wife_data[5]
