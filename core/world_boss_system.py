@@ -15,9 +15,9 @@ WORLD_BOSS_CONFIG = {
         "description": "被黑暗力量侵蚀的公主，散发着危险的气息",
         "shield": 15,  # 护盾值15%，公主的神圣防护
         "phases": [
-            {"phase": 1, "max_hp": 10000, "name": "小小引导者"},
-            {"phase": 2, "max_hp": 30000, "name": "极光绽放"},
-            {"phase": 3, "max_hp": 50000, "name": "精灵的启示"}
+            {"phase": 1, "max_hp": 10000, "name": "小小引导者", "min_attacks": 20},
+            {"phase": 2, "max_hp": 30000, "name": "极光绽放", "min_attacks": 30},
+            {"phase": 3, "max_hp": 50000, "name": "精灵的启示", "min_attacks": 40}
         ],
         "rewards": {
             1: {"coins": [10000, 12000], "items": ["可可萝的围裙", "温暖的料理", "美食食谱"]},
@@ -31,9 +31,9 @@ WORLD_BOSS_CONFIG = {
         "description": "巨大的芋头成精，散发着香甜诱人的气息",
         "shield": 25,  # 护盾值25%，芋头的厚实外皮
         "phases": [
-            {"phase": 1, "max_hp": 15000, "name": "香甜表皮"},
-            {"phase": 2, "max_hp": 35000, "name": "软糯内心"},
-            {"phase": 3, "max_hp": 120000, "name": "芋头之王"}
+            {"phase": 1, "max_hp": 12000, "name": "香甜表皮", "min_attacks": 20},
+            {"phase": 2, "max_hp": 32000, "name": "软糯内心", "min_attacks": 30},
+            {"phase": 3, "max_hp": 60000, "name": "芋头之王", "min_attacks": 40}
         ],
         "rewards": {
             1: {"coins": [10000, 15000], "items": ["芋头片", "烤芋头", "芋头泥"]},
@@ -47,9 +47,9 @@ WORLD_BOSS_CONFIG = {
         "description": "我这个级别的基米，可以哈任何人！！！",
         "shield": 20,  # 护盾值20%，基米的天然抗性
         "phases": [
-            {"phase": 1, "max_hp": 18000, "name": "圆头凝视"},
-            {"phase": 2, "max_hp": 40000, "name": "哈气震场"},
-            {"phase": 3, "max_hp": 150000, "name": "猫界霸主"}
+            {"phase": 1, "max_hp": 14000, "name": "圆头凝视", "min_attacks": 20},
+            {"phase": 2, "max_hp": 34000, "name": "哈气震场", "min_attacks": 30},
+            {"phase": 3, "max_hp": 80000, "name": "猫界霸主", "min_attacks": 40}
         ],
         "rewards": {
             1: {"coins": [12000, 18000], "items": ["哈基米毛发", "耄耋碎片", "哈气表情包"]},
@@ -64,6 +64,7 @@ WORLD_BOSS_CONFIG = {
 world_boss_data = {}
 world_boss_damage_records = {}  # 记录每个用户对boss造成的伤害
 daily_attack_counts = {}  # 记录每个用户每日攻击次数
+phase_attack_counts = {}  # 记录当前阶段被攻击的总次数
 
 def clean_nickname(nickname: str) -> str:
     """清理昵称，去除图片文件后缀"""
@@ -81,13 +82,14 @@ def clean_nickname(nickname: str) -> str:
 
 def load_world_boss_data():
     """加载世界Boss数据"""
-    global world_boss_data, world_boss_damage_records, daily_attack_counts
+    global world_boss_data, world_boss_damage_records, daily_attack_counts, phase_attack_counts
 
     # 使用正确的数据目录路径
     from ..config.settings import DATA_DIR
     boss_data_file = os.path.join(DATA_DIR, 'world_boss_data.json')
     damage_records_file = os.path.join(DATA_DIR, 'world_boss_damage_records.json')
     daily_attacks_file = os.path.join(DATA_DIR, 'daily_attack_counts.json')
+    phase_attacks_file = os.path.join(DATA_DIR, 'phase_attack_counts.json')
     
     # 加载Boss状态数据
     if not os.path.exists(boss_data_file):
@@ -130,6 +132,19 @@ def load_world_boss_data():
                 "counts": {}
             }
             save_daily_attack_counts()
+    
+    # 加载阶段攻击次数
+    if not os.path.exists(phase_attacks_file):
+        phase_attack_counts = {"current_phase_attacks": 0}
+        save_phase_attack_counts()
+    else:
+        with open(phase_attacks_file, 'r', encoding='utf-8') as f:
+            phase_attack_counts = json.load(f)
+        
+        # 确保数据结构正确
+        if "current_phase_attacks" not in phase_attack_counts:
+            phase_attack_counts["current_phase_attacks"] = 0
+            save_phase_attack_counts()
 
 def save_world_boss_data():
     """保存世界Boss数据"""
@@ -152,9 +167,16 @@ def save_daily_attack_counts():
     with open(daily_attacks_file, 'w', encoding='utf-8') as f:
         json.dump(daily_attack_counts, f, ensure_ascii=False, indent=4)
 
+def save_phase_attack_counts():
+    """保存阶段攻击次数"""
+    from ..config.settings import DATA_DIR
+    phase_attacks_file = os.path.join(DATA_DIR, 'phase_attack_counts.json')
+    with open(phase_attacks_file, 'w', encoding='utf-8') as f:
+        json.dump(phase_attack_counts, f, ensure_ascii=False, indent=4)
+
 def reset_phase_attack_counts():
     """重置阶段出刀次数（保留排名数据）"""
-    global daily_attack_counts
+    global daily_attack_counts, phase_attack_counts
     print("[世界Boss] 阶段切换，重置出刀次数但保留排名数据")
     
     # 保留日期但清空出刀次数
@@ -164,7 +186,11 @@ def reset_phase_attack_counts():
         "counts": {}
     }
     save_daily_attack_counts()
-    print("[世界Boss] 阶段出刀次数重置完成，所有玩家可以重新攻击")
+    
+    # 重置当前阶段攻击次数
+    phase_attack_counts = {"current_phase_attacks": 0}
+    save_phase_attack_counts()
+    print("[世界Boss] 阶段出刀次数和阶段攻击次数重置完成，所有玩家可以重新攻击")
 
 def initialize_new_boss(boss_name: str) -> dict:
     """初始化新的世界Boss"""
@@ -441,9 +467,33 @@ def attack_world_boss(user_id: str, nickname: str, group_id: str) -> dict:
     world_boss_damage_records[user_id]["nickname"] = clean_nick  # 更新昵称
     world_boss_damage_records[user_id]["wife_name"] = clean_wife_name  # 更新老婆名字，确保去除图片后缀
     
+    # 更新阶段攻击次数计数
+    phase_attack_counts["current_phase_attacks"] = phase_attack_counts.get("current_phase_attacks", 0) + 1
+    
     # 对Boss造成伤害
     world_boss_data["current_hp"] -= damage
     world_boss_data["last_attack_time"] = datetime.now().isoformat()
+    
+    # 检查阶段攻击次数限制，防止Boss血量低于1（除非攻击次数达到要求）
+    current_phase = world_boss_data["current_phase"]
+    boss_name = world_boss_data["name"]
+    boss_config = WORLD_BOSS_CONFIG.get(boss_name, {})
+    
+    if boss_config and "phases" in boss_config:
+        phase_config = None
+        for phase in boss_config["phases"]:
+            if phase["phase"] == current_phase:
+                phase_config = phase
+                break
+        
+        if phase_config:
+            min_attacks_required = phase_config.get("min_attacks", 0)
+            current_attacks = phase_attack_counts.get("current_phase_attacks", 0)
+            
+            # 如果攻击次数不足且Boss血量将低于1，则锁血在1
+            if current_attacks < min_attacks_required and world_boss_data["current_hp"] < 1:
+                world_boss_data["current_hp"] = 1
+                print(f"[世界Boss] 阶段攻击次数不足({current_attacks}/{min_attacks_required})，Boss血量锁定在1")
     
     # 给予每次攻击的基础奖励 - 根据Boss类型确定奖励物品
     base_reward_coins = random.randint(200, 500)  # 200-500金币
@@ -475,6 +525,19 @@ def attack_world_boss(user_id: str, nickname: str, group_id: str) -> dict:
     
     save_user_data()  # 保存用户数据
     
+    # 获取当前阶段攻击次数信息
+    current_phase = world_boss_data["current_phase"]
+    boss_name = world_boss_data["name"]
+    boss_config = WORLD_BOSS_CONFIG.get(boss_name, {})
+    current_attacks = phase_attack_counts.get("current_phase_attacks", 0)
+    min_attacks_required = 0
+    
+    if boss_config and "phases" in boss_config:
+        for phase in boss_config["phases"]:
+            if phase["phase"] == current_phase:
+                min_attacks_required = phase.get("min_attacks", 0)
+                break
+    
     result = {
         "success": True,
         "damage": damage,
@@ -487,7 +550,10 @@ def attack_world_boss(user_id: str, nickname: str, group_id: str) -> dict:
         "phase_rewards": None,
         "final_rewards": None,
         "base_reward_coins": base_reward_coins,
-        "base_reward_item": selected_item
+        "base_reward_item": selected_item,
+        "current_phase_attacks": current_attacks,
+        "min_attacks_required": min_attacks_required,
+        "attacks_remaining": max(0, min_attacks_required - current_attacks)
     }
     
     # 检查是否击败当前阶段
@@ -530,6 +596,7 @@ def attack_world_boss(user_id: str, nickname: str, group_id: str) -> dict:
     save_world_boss_data()
     save_world_boss_damage_records()
     save_daily_attack_counts()
+    save_phase_attack_counts()
     
     return result
 
@@ -662,11 +729,23 @@ def get_world_boss_status() -> dict:
             "attack_count": damage_data["attack_count"]
         })
     
-    # 获取Boss护盾信息
+    # 获取Boss护盾信息和攻击次数信息
     boss_name = world_boss_data["name"]
+    current_phase = world_boss_data["current_phase"]
     shield_percentage = 0
+    current_attacks = phase_attack_counts.get("current_phase_attacks", 0)
+    min_attacks_required = 0
+    
     if boss_name in WORLD_BOSS_CONFIG:
         shield_percentage = WORLD_BOSS_CONFIG[boss_name].get("shield", 0)
+        boss_config = WORLD_BOSS_CONFIG[boss_name]
+        
+        # 获取当前阶段的最小攻击次数要求
+        if "phases" in boss_config:
+            for phase in boss_config["phases"]:
+                if phase["phase"] == current_phase:
+                    min_attacks_required = phase.get("min_attacks", 0)
+                    break
     
     return {
         "exists": True,
@@ -680,7 +759,10 @@ def get_world_boss_status() -> dict:
         "is_defeated": world_boss_data.get("is_defeated", False),
         "total_participants": len(world_boss_damage_records),
         "total_damage_dealt": sum(data["total_damage"] for data in world_boss_damage_records.values()),
-        "ranking": ranking_display
+        "ranking": ranking_display,
+        "current_phase_attacks": current_attacks,
+        "min_attacks_required": min_attacks_required,
+        "attacks_remaining": max(0, min_attacks_required - current_attacks)
     }
 
 def get_daily_boss_name():
@@ -700,7 +782,7 @@ def get_daily_boss_name():
 
 def reset_world_boss(boss_name=None):
     """重置世界Boss（每天自动调用或管理员指定）"""
-    global world_boss_data, world_boss_damage_records, daily_attack_counts
+    global world_boss_data, world_boss_damage_records, daily_attack_counts, phase_attack_counts
     
     # 如果没有指定Boss名称，则使用今日Boss
     if boss_name is None:
@@ -716,12 +798,16 @@ def reset_world_boss(boss_name=None):
         "counts": {}
     }
     
+    # 重置阶段攻击次数
+    phase_attack_counts = {"current_phase_attacks": 0}
+    
     # 初始化指定的Boss
     world_boss_data = initialize_new_boss(boss_name)
     
     save_world_boss_data()
     save_world_boss_damage_records()
     save_daily_attack_counts()
+    save_phase_attack_counts()
     
     print(f"[世界Boss] 已重置为新Boss: {boss_name}")
     return boss_name

@@ -81,6 +81,28 @@ class WorldBossHandler:
             
             status_msg += f"当前阶段：第{boss_status['current_phase']}阶段 - {boss_status['phase_name']}\n"
             
+            # 显示阶段攻击次数进度
+            current_attacks = boss_status.get('current_phase_attacks', 0)
+            min_attacks = boss_status.get('min_attacks_required', 0)
+            attacks_remaining = boss_status.get('attacks_remaining', 0)
+            
+            if min_attacks > 0:
+                attack_progress = min(current_attacks, min_attacks)
+                progress_percentage = (attack_progress / min_attacks) * 100
+                
+                # 攻击次数进度条
+                progress_bar_length = 20
+                filled_length = int(progress_bar_length * attack_progress / min_attacks)
+                progress_bar = "█" * filled_length + "░" * (progress_bar_length - filled_length)
+                
+                status_msg += f"⚔️ 阶段攻击进度：{current_attacks}/{min_attacks} ({progress_percentage:.1f}%)\n"
+                status_msg += f"[{progress_bar}]\n"
+                
+                if attacks_remaining > 0:
+                    status_msg += f"🔒 还需{attacks_remaining}次攻击才能进入下阶段\n"
+                else:
+                    status_msg += f"✅ 已满足阶段攻击次数要求\n"
+            
             if boss_status.get('is_defeated', False):
                 status_msg += "状态：已被击败！\n"
             else:
@@ -156,6 +178,22 @@ class WorldBossHandler:
                 filled_length = int(bar_length * attack_result['boss_current_hp'] / attack_result['boss_max_hp'])
                 bar = "█" * filled_length + "░" * (bar_length - filled_length)
                 result_msg += f"[{bar}]\n"
+            
+            # 显示攻击次数进度信息
+            current_attacks = attack_result.get('current_phase_attacks', 0)
+            min_attacks = attack_result.get('min_attacks_required', 0)
+            attacks_remaining = attack_result.get('attacks_remaining', 0)
+            
+            if min_attacks > 0:
+                attack_progress = min(current_attacks, min_attacks)
+                progress_percentage = (attack_progress / min_attacks) * 100
+                
+                result_msg += f"⚔️ 阶段攻击进度：{current_attacks}/{min_attacks} ({progress_percentage:.1f}%)\n"
+                
+                if attacks_remaining > 0:
+                    result_msg += f"🔒 还需{attacks_remaining}次攻击才能进入下阶段\n"
+                else:
+                    result_msg += f"✅ 已满足阶段攻击次数要求！\n"
 
             # 检查阶段击败
             if attack_result["phase_defeated"]:
